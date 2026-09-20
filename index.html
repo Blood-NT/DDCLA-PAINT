@@ -2168,7 +2168,7 @@
     // =========================================================================
     // HIGH-SPEED FETCH LIVE CSV WITH TIMEOUT & CONCURRENT PROXY RACING
     // =========================================================================
-    async function fetchWithTimeout(url, timeoutMs = 3000) {
+    async function fetchWithTimeout(url, timeoutMs = 6000) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       try {
@@ -2176,7 +2176,7 @@
         clearTimeout(timer);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const text = await res.text();
-        if (!text || text.length < 50 || (!text.includes(',') && !text.includes(';'))) {
+        if (!text || text.length < 50 || (!text.includes(',') && !text.includes(';') && !text.includes('\t'))) {
           throw new Error('Dữ liệu không hợp lệ');
         }
         return text;
@@ -2187,29 +2187,30 @@
     }
 
     async function fetchCsvWithFallback(directUrl) {
-      // 1. Thử fetch trực tiếp trước với timeout ngắn 2.5s (Cực nhanh trên môi trường web)
+      // 1. Thử fetch trực tiếp trước (Cực nhanh khi chạy trên web hosting)
       try {
-        const directText = await fetchWithTimeout(directUrl, 2500);
+        const directText = await fetchWithTimeout(directUrl, 4000);
         return directText;
       } catch (e) {
         // Direct fetch bị chặn CORS hoặc quá hạn -> chuyển sang chạy đua proxy
       }
 
-      // 2. Chạy đua đa cổng proxy đồng thời (Promise.any lấy kết quả nhanh nhất)
+      // 2. Chạy đua đa cổng proxy đồng thời
       const proxyList = [
-        'https://corsproxy.io/?' + encodeURIComponent(directUrl),
         'https://api.allorigins.win/raw?url=' + encodeURIComponent(directUrl),
-        'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(directUrl)
+        'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(directUrl),
+        'https://corsproxy.io/?' + encodeURIComponent(directUrl),
+        'https://thingproxy.freeboard.io/fetch/' + directUrl
       ];
 
       try {
-        const fastResult = await Promise.any(proxyList.map(p => fetchWithTimeout(p, 4500)));
+        const fastResult = await Promise.any(proxyList.map(p => fetchWithTimeout(p, 6500)));
         return fastResult;
       } catch (err) {
-        // 3. Fallback tuần tự nếu race đồng thời gặp nghẽn mạng
+        // 3. Fallback tuần tự nếu race gặp nghẽn mạng
         for (const url of proxyList) {
           try {
-            const text = await fetchWithTimeout(url, 6000);
+            const text = await fetchWithTimeout(url, 8000);
             return text;
           } catch (e) { }
         }
@@ -2255,10 +2256,32 @@
 
         hideLoading();
       } catch (err) {
-        console.error('Lỗi fetch dữ liệu:', err);
+        console.warn('Lỗi fetch dữ liệu trực tuyến:', err);
         hideLoading();
+
+        // Tự động phục hồi từ cache nếu có sẵn trong localStorage
+        let recoveredFromCache = false;
+        try {
+          const cachedNhap = localStorage.getItem(CACHE_KEY_NHAP);
+          const cachedXuat = localStorage.getItem(CACHE_KEY_XUAT);
+          const cachedTime = localStorage.getItem(CACHE_KEY_TIME);
+          if (cachedNhap && cachedXuat && typeof Papa !== 'undefined') {
+            const rawNhapRows = Papa.parse(cachedNhap, { skipEmptyLines: true }).data;
+            const rawXuatRows = Papa.parse(cachedXuat, { skipEmptyLines: true }).data;
+            if (rawNhapRows && rawNhapRows.length > 5 && rawXuatRows && rawXuatRows.length > 5) {
+              processAllData(rawNhapRows, rawXuatRows);
+              recoveredFromCache = true;
+              updateSyncStatus('Bộ nhớ tạm (' + (cachedTime || 'Lưu gần nhất') + ')', false);
+            }
+          }
+        } catch (e) { }
+
         if (!isBackground) {
-          showModal('Lỗi nạp dữ liệu trực tuyến: ' + err.message, 'error');
+          if (recoveredFromCache) {
+            console.log('Đã tự động tải lại dữ liệu từ bộ nhớ tạm thành công.');
+          } else {
+            showModal('Không thể kết nối trực tuyến tới Google Sheets. Vui lòng kiểm tra kết nối mạng và bấm "Làm mới" trên thanh tiêu đề!', 'warning');
+          }
         }
       } finally {
         if (reloadIcon) reloadIcon.classList.remove('animate-spin');
@@ -4405,6 +4428,552 @@
         });
       }
     }
+
+    async function handleQrFileScan(inputEl) {
+      if (!inputEl.files || !inputEl.files.length) return;
+      const file = inputEl.files[0];
+      const statusText = document.getElementById('qr-scan-status-text');
+      if (statusText) statusText.innerText = 'Đang nhận diện mã QR từ hình ảnh...';
+
+      const loaded = await ensureHtml5QrLoaded();
+      if (!loaded) return;
+
+      const scanner = html5QrScanner || new Html5Qrcode("qr-reader");
+      scanner.scanFile(file, true)
+        .then(decodedText => {
+          onQrCodeDetected(decodedText);
+        })
+        .catch(err => {
+          if (statusText) statusText.innerHTML = '<span class="text-red-600 font-bold">Không tìm thấy mã QR trong ảnh. Vui lòng chụp rõ nét hơn!</span>';
+        });
+    }
+
+    function onQrCodeDetected(qrText) {
+      closeQrScannerModal();
+
+      let text = (qrText || '').trim();
+      console.log('Processing detected QR:', text);
+
+      // 1. Kiểm tra nếu là Mã Vật Tư (mvt=..., mavt=..., MVT:...)
+      if (text.includes('mvt=') || text.includes('mavt=')) {
+        const match = text.match(/m(?:a)?vt=([a-zA-Z0-9_.-]+)/i);
+        if (match && match[1]) {
+          openMaterialDetailModal(decodeURIComponent(match[1]));
+          return;
+        }
+      }
+
+      if (text.toUpperCase().startsWith('MVT:')) {
+        const mvt = text.substring(4).trim();
+        openMaterialDetailModal(mvt);
+        return;
+      }
+
+      // 2. Kiểm tra nếu là Vị Trí Kệ có kèm kho trong URL/Query/Hash (vitri=...&kho=... hoặc vt=...&k=...)
+      if (text.includes('vitri=') || text.includes('vt=')) {
+        const vtMatch = text.match(/v(?:itri|t)=([a-zA-Z0-9_-]+)/i);
+        const khoMatch = text.match(/k(?:ho)?=([a-zA-Z0-9_-]+)/i);
+        if (vtMatch && vtMatch[1]) {
+          const rackCode = decodeURIComponent(vtMatch[1]);
+          const khoCode = khoMatch ? decodeURIComponent(khoMatch[1]) : null;
+          locateAndHighlightRack(rackCode, khoCode);
+          return;
+        }
+      }
+
+      if (text.includes('#')) {
+        const hash = text.split('#')[1] || '';
+        if (hash.startsWith('mvt=')) {
+          openMaterialDetailModal(decodeURIComponent(hash.replace('mvt=', '')));
+          return;
+        }
+        if (hash.includes('vitri=')) {
+          const hashParams = new URLSearchParams(hash);
+          const vt = hashParams.get('vitri') || '';
+          const k = hashParams.get('kho') || '';
+          locateAndHighlightRack(vt, k);
+          return;
+        }
+      }
+
+      // 3. Kiểm tra tiền tố Kho X6 / Kho Lạnh (vd: X6-A1, LANH-A1, KHO X6 - A1, KHO LẠNH - A1)
+      const upper = text.toUpperCase();
+      if (upper.startsWith('X6-') || upper.startsWith('X6_') || upper.startsWith('KHO X6 - ') || upper.startsWith('KHO X6_') || upper.startsWith('KHO X6:')) {
+        const cleanVt = upper.replace(/^(?:KHOs*)?X6[-_s:]*/i, '').trim();
+        locateAndHighlightRack(cleanVt, 'x6');
+        return;
+      }
+      if (upper.startsWith('LANH-') || upper.startsWith('LANH_') || upper.startsWith('KHO LANH - ') || upper.startsWith('KHO LẠNH - ') || upper.startsWith('KHO LANH_') || upper.startsWith('KHO LẠNH_') || upper.startsWith('KHO LẠNH:')) {
+        const cleanVt = upper.replace(/^(?:KHOs*)?L(?:A|Ạ)NH[-_s:]*/i, '').trim();
+        locateAndHighlightRack(cleanVt, 'lanh');
+        return;
+      }
+
+      // 4. Kiểm tra nếu chuỗi khớp trực tiếp với Mã VT trong kho
+      const isMvtMatch = (globalData.inventory || []).some(i => (i.ma || '').toUpperCase() === upper) ||
+        (globalData.logs || []).some(l => (l.ma || '').toUpperCase() === upper);
+      if (isMvtMatch) {
+        openMaterialDetailModal(upper);
+        return;
+      }
+
+      // 5. Kiểm tra nếu chuỗi khớp trực tiếp với Vị trí kệ
+      const isRackMatch = POSITIONS_X6.includes(upper) || POSITIONS_LANH.includes(upper);
+      if (isRackMatch) {
+        locateAndHighlightRack(upper);
+        return;
+      }
+
+      // 6. Nếu không rõ, tìm kiếm trong tồn kho
+      const fuzzyMvt = (globalData.inventory || []).find(i => (i.ma || '').toUpperCase().includes(upper));
+      if (fuzzyMvt) {
+        openMaterialDetailModal(fuzzyMvt.ma);
+        return;
+      }
+
+      showModal('Đã quét được nội dung: "' + text + '" nhưng không khớp với mã vật tư hoặc vị trí kệ nào trong kho.', 'info');
+    }
+
+    function locateAndHighlightRack(rackKey, targetKhoParam) {
+      if (!rackKey) return;
+      const safeKey = rackKey.toUpperCase().trim();
+
+      let targetKho = null;
+      if (targetKhoParam) {
+        const tk = targetKhoParam.toLowerCase();
+        targetKho = (tk.includes('lạnh') || tk.includes('lanh') || tk === 'lanh') ? 'lanh' : 'x6';
+      } else {
+        const inLanh = POSITIONS_LANH.includes(safeKey);
+        const inX6 = POSITIONS_X6.includes(safeKey);
+        if (inLanh && !inX6) targetKho = 'lanh';
+        else if (inX6 && !inLanh) targetKho = 'x6';
+        else targetKho = currentLayoutKho || 'x6';
+      }
+
+      currentLayoutKho = targetKho;
+
+      // Đóng modal chi tiết nếu đang mở
+      closeMaterialDetailModal();
+      closeQrGeneratorModal();
+
+      // Chuyển sang tab layout
+      const layoutTabBtn = document.querySelectorAll('.menu-item')[3];
+      switchTab('layout', layoutTabBtn);
+      drawLayout(targetKho);
+
+      setTimeout(() => {
+        const box = document.querySelector('.box-vt[data-vt="' + safeKey + '"]');
+        if (box) {
+          box.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+          box.classList.add('radar-active');
+          setTimeout(() => {
+            box.classList.remove('radar-active');
+          }, 4000);
+        }
+        openRackPopupModal(safeKey, targetKho);
+      }, 300);
+    }
+
+    function checkUrlForParam() {
+      const hash = window.location.hash || '';
+      const params = new URLSearchParams(window.location.search);
+
+      // Check Material Code
+      let mvt = params.get('mvt') || params.get('mavt');
+      if (!mvt && hash.includes('mvt=')) {
+        const match = hash.match(/m(?:a)?vt=([a-zA-Z0-9_.-]+)/i);
+        if (match) mvt = decodeURIComponent(match[1]);
+      }
+
+      if (mvt) {
+        setTimeout(() => {
+          openMaterialDetailModal(mvt);
+        }, 600);
+        return;
+      }
+
+      // Check Rack Location
+      let vt = params.get('vitri') || params.get('vt');
+      let kho = params.get('kho') || params.get('k');
+      if (!vt && hash.includes('vitri=')) {
+        const match = hash.match(/v(?:itri|t)=([a-zA-Z0-9_-]+)/i);
+        if (match) vt = decodeURIComponent(match[1]);
+        const kMatch = hash.match(/k(?:ho)?=([a-zA-Z0-9_-]+)/i);
+        if (kMatch) kho = decodeURIComponent(kMatch[1]);
+      }
+
+      if (vt) {
+        setTimeout(() => {
+          locateAndHighlightRack(vt, kho);
+        }, 600);
+      }
+    }
+
+    // =========================================================================
+    // TRUNG TÂM IN TEM MÃ QR (TEM VỊ TRÍ & TEM MÃ VẬT TƯ 100x40mm & 100x60mm)
+    // =========================================================================
+    function populateQrRackOptions() {
+      const select = document.getElementById('qr-rack-filter-select');
+      const khoFilter = document.getElementById('qr-warehouse-filter-select')?.value || 'ALL';
+      if (!select) return;
+
+      if (khoFilter === 'X6') {
+        select.innerHTML = '<option value="ALL_X6">🔴 Tất cả 20 vị trí Kho X6 (A1-A10, B1-B10)</option>' +
+          '<optgroup label="Kho X6">' +
+          POSITIONS_X6.map(r => '<option value="X6_' + r + '">Kho X6 - Vị trí ' + r + '</option>').join('') +
+          '</optgroup>';
+      } else if (khoFilter === 'LANH') {
+        select.innerHTML = '<option value="ALL_LANH">❄️ Tất cả 12 vị trí Kho Lạnh (A1-A3, B1-B5, C1-C4)</option>' +
+          '<optgroup label="Kho Lạnh">' +
+          POSITIONS_LANH.map(r => '<option value="LANH_' + r + '">Kho Lạnh - Vị trí ' + r + '</option>').join('') +
+          '</optgroup>';
+      } else {
+        select.innerHTML = '<option value="ALL">🏛️ Tất cả 32 vị trí (Kho X6 & Kho Lạnh)</option>' +
+          '<option value="ALL_X6">🔴 Toàn bộ 20 vị trí Kho X6</option>' +
+          '<option value="ALL_LANH">❄️ Toàn bộ 12 vị trí Kho Lạnh</option>' +
+          '<optgroup label="🔴 KHO X6 (20 vị trí)">' +
+          POSITIONS_X6.map(r => '<option value="X6_' + r + '">Kho X6 - Vị trí ' + r + '</option>').join('') +
+          '</optgroup>' +
+          '<optgroup label="❄️ KHO LẠNH (12 vị trí)">' +
+          POSITIONS_LANH.map(r => '<option value="LANH_' + r + '">Kho Lạnh - Vị trí ' + r + '</option>').join('') +
+          '</optgroup>';
+      }
+    }
+
+    function onQrWarehouseFilterChange() {
+      populateQrRackOptions();
+      renderQrPrintCards();
+    }
+
+    function openQrGeneratorModal(initialMode, searchCode) {
+      const modal = document.getElementById('qr-generator-modal');
+      if (modal) modal.classList.remove('hidden');
+      populateQrRackOptions();
+
+      if (initialMode) {
+        setQrGenMode(initialMode);
+      }
+      if (searchCode) {
+        const inp = document.getElementById('qr-mvt-search-inp');
+        if (inp) inp.value = searchCode;
+      }
+      renderQrPrintCards();
+    }
+
+    function closeQrGeneratorModal() {
+      document.getElementById('qr-generator-modal')?.classList.add('hidden');
+    }
+
+    function setQrGenMode(mode) {
+      qrGenMode = mode;
+      const rackBtn = document.getElementById('qr-tab-rack-btn');
+      const mvtBtn = document.getElementById('qr-tab-mvt-btn');
+      const rackFilter = document.getElementById('qr-rack-filter-wrap');
+      const mvtFilter = document.getElementById('qr-mvt-filter-wrap');
+
+      if (mode === 'rack') {
+        if (rackBtn) {
+          rackBtn.className = 'px-3.5 py-1.5 rounded-xl font-black transition bg-red-700 text-yellow-300 shadow-xs cursor-pointer';
+        }
+        if (mvtBtn) {
+          mvtBtn.className = 'px-3.5 py-1.5 rounded-xl font-bold transition text-slate-700 hover:bg-slate-200 cursor-pointer';
+        }
+        if (rackFilter) rackFilter.classList.remove('hidden');
+        if (mvtFilter) mvtFilter.classList.add('hidden');
+      } else {
+        if (mvtBtn) {
+          mvtBtn.className = 'px-3.5 py-1.5 rounded-xl font-black transition bg-red-700 text-yellow-300 shadow-xs cursor-pointer';
+        }
+        if (rackBtn) {
+          rackBtn.className = 'px-3.5 py-1.5 rounded-xl font-bold transition text-slate-700 hover:bg-slate-200 cursor-pointer';
+        }
+        if (rackFilter) rackFilter.classList.add('hidden');
+        if (mvtFilter) mvtFilter.classList.remove('hidden');
+      }
+
+      renderQrPrintCards();
+    }
+
+    function setQrLabelSize(size) {
+      currentQrLabelSize = size;
+      const btn40 = document.getElementById('qr-size-btn-100x40');
+      const btn60 = document.getElementById('qr-size-btn-100x60');
+
+      if (size === '100x40') {
+        if (btn40) btn40.className = 'px-3 py-1.5 rounded-xl border font-bold transition bg-red-600 text-white border-red-700 shadow-sm cursor-pointer';
+        if (btn60) btn60.className = 'px-3 py-1.5 rounded-xl border font-bold transition bg-white text-slate-700 border-slate-300 hover:bg-slate-100 cursor-pointer';
+      } else {
+        if (btn60) btn60.className = 'px-3 py-1.5 rounded-xl border font-bold transition bg-red-600 text-white border-red-700 shadow-sm cursor-pointer';
+        if (btn40) btn40.className = 'px-3 py-1.5 rounded-xl border font-bold transition bg-white text-slate-700 border-slate-300 hover:bg-slate-100 cursor-pointer';
+      }
+      renderQrPrintCards();
+    }
+
+    function renderQrPrintCards() {
+      const container = document.getElementById('printable-qr-area');
+      const countText = document.getElementById('qr-print-count-text');
+      const khoFilter = document.getElementById('qr-warehouse-filter-select')?.value || 'ALL';
+      if (!container) return;
+
+      container.innerHTML = '';
+      const is40 = currentQrLabelSize === '100x40';
+      const cardClass = is40 ? 'qr-label-card-100x40' : 'qr-label-card-100x60';
+      const qrPixelSize = is40 ? 105 : 155;
+      const baseUrl = window.location.origin + window.location.pathname;
+
+      if (qrGenMode === 'rack') {
+        // ======================= CHẾ ĐỘ 1: TEM VỊ TRÍ KỆ =======================
+        const selVal = document.getElementById('qr-rack-filter-select')?.value || 'ALL';
+        let listToPrint = [];
+
+        if (selVal === 'ALL') {
+          if (khoFilter === 'ALL' || khoFilter === 'X6') {
+            POSITIONS_X6.forEach(r => listToPrint.push({ kho: 'KHO X6', khoKey: 'x6', vt: r, fullCode: 'X6-' + r, subtitle: 'SƠN THƯỜNG / KẾT CẤU' }));
+          }
+          if (khoFilter === 'ALL' || khoFilter === 'LANH') {
+            POSITIONS_LANH.forEach(r => listToPrint.push({ kho: 'KHO LẠNH', khoKey: 'lanh', vt: r, fullCode: 'LANH-' + r, subtitle: 'SƠN BẢO QUẢN NHIỆT ĐỘ MÁT' }));
+          }
+        } else if (selVal === 'ALL_X6') {
+          POSITIONS_X6.forEach(r => listToPrint.push({ kho: 'KHO X6', khoKey: 'x6', vt: r, fullCode: 'X6-' + r, subtitle: 'SƠN THƯỜNG / KẾT CẤU' }));
+        } else if (selVal === 'ALL_LANH') {
+          POSITIONS_LANH.forEach(r => listToPrint.push({ kho: 'KHO LẠNH', khoKey: 'lanh', vt: r, fullCode: 'LANH-' + r, subtitle: 'SƠN BẢO QUẢN NHIỆT ĐỘ MÁT' }));
+        } else if (selVal.startsWith('X6_')) {
+          const r = selVal.replace('X6_', '');
+          listToPrint.push({ kho: 'KHO X6', khoKey: 'x6', vt: r, fullCode: 'X6-' + r, subtitle: 'SƠN THƯỜNG / KẾT CẤU' });
+        } else if (selVal.startsWith('LANH_')) {
+          const r = selVal.replace('LANH_', '');
+          listToPrint.push({ kho: 'KHO LẠNH', khoKey: 'lanh', vt: r, fullCode: 'LANH-' + r, subtitle: 'SƠN BẢO QUẢN NHIỆT ĐỘ MÁT' });
+        }
+
+        if (countText) {
+          const khoLabel = (khoFilter === 'X6' ? 'Kho X6' : (khoFilter === 'LANH' ? 'Kho Lạnh' : 'Cả 2 Kho'));
+          countText.textContent = 'Đang hiển thị ' + listToPrint.length + ' tem vị trí kệ (' + khoLabel + ' - ' + currentQrLabelSize + 'mm)';
+        }
+
+        listToPrint.forEach((item, index) => {
+          const qrUrl = baseUrl + '#vitri=' + encodeURIComponent(item.vt) + '&kho=' + encodeURIComponent(item.khoKey);
+          const qrId = 'qr_canvas_rack_' + index + '_' + Date.now();
+
+          // Thống kê nhanh số vật tư trong vị trí này của đúng kho
+          const itemsInRack = (globalData.inventory || []).filter(i => {
+            const isMatchKho = (item.khoKey === 'lanh') ? ((i.kho || '').toLowerCase().includes('lạnh') || (i.kho || '').toLowerCase().includes('lanh')) : (!(i.kho || '').toLowerCase().includes('lạnh') && !(i.kho || '').toLowerCase().includes('lanh'));
+            return isMatchKho && (i.vt || '').toUpperCase().trim() === item.vt && i.ton !== 0;
+          });
+          const countMvt = itemsInRack.length;
+          const totTonInRack = itemsInRack.reduce((acc, i) => acc + (i.ton > 0 ? i.ton : 0), 0);
+
+          const isLanh = item.khoKey === 'lanh';
+          const badgeClass = isLanh ? 'bg-blue-800 text-cyan-200 border border-blue-900' : 'bg-red-700 text-yellow-300 border border-red-800';
+          const rackCodeColor = isLanh ? 'text-blue-900' : 'text-red-700';
+          const borderStyle = isLanh ? 'border-blue-900' : 'border-slate-900';
+
+          const card = document.createElement('div');
+          card.className = cardClass + ' bg-white text-slate-900 border-2 ' + borderStyle + ' rounded-lg flex flex-row items-center justify-between p-2 shadow-xs';
+
+          card.innerHTML =
+            '<div class="flex flex-col justify-between h-full flex-1 pr-2 select-none overflow-hidden">' +
+            '<div>' +
+            '<div class="flex items-center gap-1.5 pb-1 border-b border-slate-300">' +
+            '<img src="' + DAIDUNG_LOGO_BASE64 + '" alt="Dai Dung Logo" class="h-6 w-auto object-contain shrink-0" />' +
+            '<div class="leading-none">' +
+            '<div class="text-[9px] font-black text-red-700 uppercase tracking-tighter">ĐẠI DŨNG (DDC-LA)</div>' +
+            '<div class="text-[7.5px] font-bold text-slate-600 uppercase">HỆ THỐNG KHO SƠN</div>' +
+            '</div>' +
+            '</div>' +
+            '<div class="mt-1">' +
+            '<div class="flex items-center gap-1">' +
+            '<span class="px-1.5 py-0.5 rounded text-[8.5px] font-black uppercase ' + badgeClass + '">' + (isLanh ? '❄️ KHO LẠNH' : '🔴 KHO X6') + '</span>' +
+            '<span class="text-[7.5px] font-bold text-slate-500 uppercase truncate">' + item.subtitle + '</span>' +
+            '</div>' +
+            '<div class="text-2xl sm:text-3xl font-black ' + rackCodeColor + ' tracking-tight font-mono leading-none mt-1">KỆ ' + item.vt + '</div>' +
+            '</div>' +
+            '</div>' +
+            '<div class="text-[8.5px] font-bold text-slate-600 pt-1 border-t border-slate-200 flex items-center justify-between">' +
+            '<span class="text-slate-800 font-extrabold text-[7.5px] uppercase">' + (countMvt > 0 ? countMvt + ' MÃ VT • ' + formatNum(totTonInRack) + ' LÍT' : 'VỊ TRÍ TRỐNG') + '</span>' +
+            '<span class="text-red-600 font-black text-[7.5px]">QUÉT XEM SƠ ĐỒ</span>' +
+            '</div>' +
+            '</div>' +
+            '<div class="shrink-0 flex flex-col items-center justify-center pl-1 border-l border-slate-200">' +
+            '<div id="' + qrId + '" class="p-0.5 bg-white border border-slate-900 rounded"></div>' +
+            '<span class="text-[8px] font-mono font-black ' + (isLanh ? 'text-blue-900' : 'text-red-700') + ' mt-0.5">' + item.fullCode + '</span>' +
+            '</div>';
+
+          container.appendChild(card);
+
+          setTimeout(() => {
+            const qrContainer = document.getElementById(qrId);
+            if (qrContainer && typeof QRCode !== 'undefined') {
+              qrContainer.innerHTML = '';
+              new QRCode(qrContainer, {
+                text: qrUrl,
+                width: qrPixelSize,
+                height: qrPixelSize,
+                colorDark: isLanh ? '#1e3a8a' : '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+              });
+            }
+          }, 30);
+        });
+
+      } else {
+        // ======================= CHẾ ĐỘ 2: TEM MÃ VẬT TƯ =======================
+        const filterStock = document.getElementById('qr-mvt-filter-select')?.value || 'HAS_STOCK';
+        const searchKw = (document.getElementById('qr-mvt-search-inp')?.value || '').toLowerCase().trim();
+
+        // Tổng hợp danh sách vật tư duy nhất theo Mã VT
+        const mvtMap = {};
+        (globalData.inventory || []).forEach(item => {
+          const ma = item.ma;
+          if (!mvtMap[ma]) {
+            mvtMap[ma] = {
+              ma: ma,
+              ten: item.ten || '',
+              dvt: item.dvt || 'Lít',
+              totTon: 0,
+              totNhap: 0,
+              totXuat: 0,
+              locationsX6: [],
+              locationsLanh: []
+            };
+          }
+          mvtMap[ma].totTon += item.ton;
+          mvtMap[ma].totNhap += item.nhap;
+          mvtMap[ma].totXuat += item.xuat;
+
+          const isLanh = ((item.kho || '').toLowerCase().includes('lạnh') || (item.kho || '').toLowerCase().includes('lanh'));
+          if (item.ton !== 0) {
+            if (isLanh) {
+              mvtMap[ma].locationsLanh.push({ kho: item.kho, vt: item.vt, ton: item.ton, ageDays: item.ageDays, ageStatus: item.ageStatus });
+            } else {
+              mvtMap[ma].locationsX6.push({ kho: item.kho, vt: item.vt, ton: item.ton, ageDays: item.ageDays, ageStatus: item.ageStatus });
+            }
+          }
+        });
+
+        let listToPrint = Object.values(mvtMap);
+
+        // Lọc theo Kho nếu được chọn
+        if (khoFilter === 'X6') {
+          listToPrint = listToPrint.filter(m => m.locationsX6.length > 0 || (globalData.logs || []).some(l => (l.ma || '').toUpperCase() === m.ma.toUpperCase() && !(l.kho || '').toLowerCase().includes('lạnh')));
+        } else if (khoFilter === 'LANH') {
+          listToPrint = listToPrint.filter(m => m.locationsLanh.length > 0 || (globalData.logs || []).some(l => (l.ma || '').toUpperCase() === m.ma.toUpperCase() && (l.kho || '').toLowerCase().includes('lạnh')));
+        }
+
+        // Lọc theo từ khóa tìm kiếm hoặc tồn kho
+        if (searchKw) {
+          listToPrint = listToPrint.filter(m =>
+            m.ma.toLowerCase().includes(searchKw) ||
+            m.ten.toLowerCase().includes(searchKw) ||
+            m.locationsX6.some(l => l.vt.toLowerCase().includes(searchKw)) ||
+            m.locationsLanh.some(l => l.vt.toLowerCase().includes(searchKw))
+          );
+        } else if (filterStock === 'HAS_STOCK') {
+          if (khoFilter === 'X6') {
+            listToPrint = listToPrint.filter(m => m.locationsX6.reduce((a, b) => a + b.ton, 0) > 0);
+          } else if (khoFilter === 'LANH') {
+            listToPrint = listToPrint.filter(m => m.locationsLanh.reduce((a, b) => a + b.ton, 0) > 0);
+          } else {
+            listToPrint = listToPrint.filter(m => m.totTon > 0);
+          }
+        }
+
+        // Sắp xếp mã VT A-Z
+        listToPrint.sort((a, b) => a.ma.localeCompare(b.ma));
+
+        if (countText) {
+          const khoLabel = (khoFilter === 'X6' ? 'Kho X6' : (khoFilter === 'LANH' ? 'Kho Lạnh' : 'Tất cả Kho'));
+          countText.textContent = 'Đang hiển thị ' + listToPrint.length + ' tem mã vật tư (' + khoLabel + ' - ' + currentQrLabelSize + 'mm)';
+        }
+
+        if (listToPrint.length === 0) {
+          container.innerHTML = '<div class="p-8 text-center text-slate-400 font-bold italic">Không có mã vật tư nào khớp với bộ lọc kho và điều kiện tìm kiếm</div>';
+          return;
+        }
+
+        listToPrint.slice(0, 150).forEach((item, index) => {
+          const qrUrl = baseUrl + '#mvt=' + encodeURIComponent(item.ma);
+          const qrId = 'qr_canvas_mvt_' + index + '_' + Date.now();
+
+          // Thống kê vị trí & tồn từng kho
+          const tonX6 = item.locationsX6.reduce((acc, l) => acc + l.ton, 0);
+          const tonLanh = item.locationsLanh.reduce((acc, l) => acc + l.ton, 0);
+
+          let locX6Text = item.locationsX6.length > 0 ? item.locationsX6.map(l => l.vt + ' (' + formatNum(l.ton) + ')').join(', ') : 'Trống';
+          let locLanhText = item.locationsLanh.length > 0 ? item.locationsLanh.map(l => l.vt + ' (' + formatNum(l.ton) + ')').join(', ') : 'Trống';
+
+          let khoBadge = '';
+          if (tonX6 > 0 && tonLanh > 0) {
+            khoBadge = '<span class="px-1.5 py-0.2 rounded bg-purple-100 text-purple-900 border border-purple-300 font-black text-[7.5px]">🏛️ CẢ 2 KHO</span>';
+          } else if (tonLanh > 0) {
+            khoBadge = '<span class="px-1.5 py-0.2 rounded bg-cyan-100 text-cyan-900 border border-cyan-300 font-black text-[7.5px]">❄️ KHO LẠNH</span>';
+          } else if (tonX6 > 0) {
+            khoBadge = '<span class="px-1.5 py-0.2 rounded bg-red-100 text-red-900 border border-red-300 font-black text-[7.5px]">🔴 KHO X6</span>';
+          } else {
+            khoBadge = '<span class="px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-300 font-bold text-[7.5px]">HẾT TỒN</span>';
+          }
+
+          const card = document.createElement('div');
+          card.className = cardClass + ' bg-white text-slate-900 border-2 border-slate-900 rounded-lg flex flex-row items-center justify-between p-2 shadow-xs';
+
+          card.innerHTML =
+            '<div class="flex flex-col justify-between h-full flex-1 pr-2 select-none overflow-hidden">' +
+            '<div>' +
+            '<div class="flex items-center justify-between pb-1 border-b border-slate-300">' +
+            '<div class="flex items-center gap-1.5">' +
+            '<img src="' + DAIDUNG_LOGO_BASE64 + '" alt="Dai Dung Logo" class="h-5 sm:h-6 w-auto object-contain shrink-0" />' +
+            '<div class="leading-none">' +
+            '<div class="text-[8.5px] font-black text-red-700 uppercase tracking-tighter">ĐẠI DŨNG (DDC-LA)</div>' +
+            '<div class="text-[7px] font-bold text-slate-600 uppercase">KHO SƠN LONG AN</div>' +
+            '</div>' +
+            '</div>' +
+            khoBadge +
+            '</div>' +
+            '<div class="mt-1 space-y-0.5">' +
+            '<div class="text-[13px] font-black text-red-700 font-mono tracking-tight leading-none truncate" title="' + escapeHTML(item.ma) + '">' +
+            item.ma +
+            '</div>' +
+            '<div class="text-[9px] font-bold text-slate-900 line-clamp-2 leading-tight" title="' + escapeHTML(item.ten) + '">' +
+            (item.ten || 'Chưa đặt tên vật tư') +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '<div class="text-[8px] font-bold text-slate-700 pt-1 border-t border-slate-200 flex flex-col gap-0.5">' +
+            '<div class="flex items-center justify-between text-[7.5px] leading-none">' +
+            '<span class="truncate ' + (tonX6 > 0 ? 'text-red-800 font-extrabold' : 'text-slate-400') + '">X6: ' + escapeHTML(locX6Text) + '</span>' +
+            '<span class="truncate ' + (tonLanh > 0 ? 'text-blue-800 font-extrabold' : 'text-slate-400') + ' ml-1">Lạnh: ' + escapeHTML(locLanhText) + '</span>' +
+            '</div>' +
+            '<div class="flex items-center justify-between pt-0.5 border-t border-dashed border-slate-200">' +
+            '<span>Tổng tồn: <b class="text-red-700 font-black font-mono text-[9.5px]">' + formatNum(item.totTon) + ' ' + (item.dvt || 'Lít') + '</b></span>' +
+            '<span class="text-[7px] text-red-600 font-black uppercase">QUÉT XEM CHI TIẾT</span>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '<div class="shrink-0 flex flex-col items-center justify-center pl-1 border-l border-slate-200">' +
+            '<div id="' + qrId + '" class="p-0.5 bg-white border border-slate-900 rounded"></div>' +
+            '<span class="text-[7.5px] font-mono font-bold text-slate-500 mt-0.5">' + item.ma.substring(0, 10) + '</span>' +
+            '</div>';
+
+          container.appendChild(card);
+
+          setTimeout(() => {
+            const qrContainer = document.getElementById(qrId);
+            if (qrContainer && typeof QRCode !== 'undefined') {
+              qrContainer.innerHTML = '';
+              new QRCode(qrContainer, {
+                text: qrUrl,
+                width: qrPixelSize,
+                height: qrPixelSize,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+              });
+            }
+          }, 30);
+        });
+      }
+    }
+
 
     function openMaterialDetailModal(mvtCode) {
       if (!mvtCode) return;
