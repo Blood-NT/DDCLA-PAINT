@@ -1434,22 +1434,33 @@
             </button>
           </div>
 
+          <!-- Filter for Warehouse (Kho) -->
+          <div class="flex items-center gap-1.5">
+            <span class="font-bold text-slate-700">Chọn Kho:</span>
+            <select id="qr-warehouse-filter-select" onchange="onQrWarehouseFilterChange()"
+              class="bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 font-bold text-slate-800 focus:outline-none focus:border-red-500 shadow-sm">
+              <option value="ALL">🏛️ Cả 2 kho (X6 & Lạnh)</option>
+              <option value="X6">🔴 Chỉ Kho X6 (20 kệ)</option>
+              <option value="LANH">❄️ Chỉ Kho Lạnh (12 kệ)</option>
+            </select>
+          </div>
+
           <!-- Filter for Rack -->
           <div id="qr-rack-filter-wrap" class="flex items-center gap-1.5">
             <span class="font-bold text-slate-700">Vị trí:</span>
             <select id="qr-rack-filter-select" onchange="renderQrPrintCards()"
               class="bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 font-bold text-slate-800 focus:outline-none focus:border-red-500 shadow-sm">
-              <option value="ALL">Tất cả vị trí Kho X6 & Kho Lạnh</option>
+              <option value="ALL">Tất cả vị trí</option>
             </select>
           </div>
 
           <!-- Filter for Material -->
           <div id="qr-mvt-filter-wrap" class="hidden flex items-center gap-2">
             <div class="flex items-center gap-1.5">
-              <span class="font-bold text-slate-700">Bộ lọc:</span>
+              <span class="font-bold text-slate-700">Tồn kho:</span>
               <select id="qr-mvt-filter-select" onchange="renderQrPrintCards()"
                 class="bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 font-bold text-slate-800 focus:outline-none focus:border-red-500 shadow-sm">
-                <option value="HAS_STOCK">Vật tư có tồn kho (Khác 0)</option>
+                <option value="HAS_STOCK">Vật tư có tồn kho (&gt; 0)</option>
                 <option value="ALL">Toàn bộ tất cả mã vật tư</option>
               </select>
             </div>
@@ -4114,14 +4125,31 @@
       }
       const printContainer = document.getElementById('standalonePrintContainer');
       if (!printContainer) return;
-      printContainer.innerHTML = `
-        <div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 4mm; padding: 2mm; background: #fff; width: 100%;">
-          ${printableArea.innerHTML}
-        </div>
-      `;
+
+      // Clone DOM và bảo toàn hình ảnh vẽ trên canvas
+      const clone = printableArea.cloneNode(true);
+      const origCanvases = printableArea.querySelectorAll('canvas');
+      const clonedCanvases = clone.querySelectorAll('canvas');
+      origCanvases.forEach((origCanvas, i) => {
+        const clonedCanvas = clonedCanvases[i];
+        if (clonedCanvas) {
+          const destCtx = clonedCanvas.getContext('2d');
+          if (destCtx) destCtx.drawImage(origCanvas, 0, 0);
+        }
+      });
+
+      printContainer.innerHTML = '';
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'display: flex; flex-direction: row; flex-wrap: wrap; gap: 4mm; padding: 2mm; background: #fff; width: 100%; justify-content: flex-start; align-items: flex-start;';
+      
+      while (clone.firstChild) {
+        wrapper.appendChild(clone.firstChild);
+      }
+      printContainer.appendChild(wrapper);
+
       setTimeout(() => {
         window.print();
-      }, 100);
+      }, 150);
     }
 
     async function exportKiemKeExcel() {
@@ -4212,13 +4240,21 @@
     // =========================================================================
     // POPUP CHI TIẾT VỊ TRÍ KHI QUÉT QR HOẶC CLICK SƠ ĐỒ
     // =========================================================================
-    function openRackPopupModal(rackKey) {
-      const isLanh = currentLayoutKho === 'lanh';
-      const safeKey = rackKey.toUpperCase().trim();
+    function openRackPopupModal(rackKey, khoParam) {
+      const safeKey = (rackKey || '').toUpperCase().trim();
+      let isLanh = false;
+      if (khoParam) {
+        const k = khoParam.toLowerCase();
+        isLanh = k.includes('lạnh') || k.includes('lanh') || k === 'lanh';
+      } else {
+        isLanh = currentLayoutKho === 'lanh';
+      }
+      const khoTitleName = isLanh ? 'KHO LẠNH' : 'KHO X6';
+
       const items = (globalData.inventory || []).filter(i => {
         if (i.ton <= 0) return false;
         const k = (i.kho || '').toLowerCase();
-        const matchKho = isLanh ? (k.includes('lạnh') || k.includes('lanh') || !k.includes('x6')) : k.includes('x6');
+        const matchKho = isLanh ? (k.includes('lạnh') || k.includes('lanh') || !k.includes('x6')) : (k.includes('x6') || !k.includes('lạnh'));
         return matchKho && (i.vt || '').toUpperCase().trim() === safeKey;
       });
 
@@ -4228,13 +4264,16 @@
       const pill = document.getElementById('popup-rack-mvt-pill');
       const searchInp = document.getElementById('popup-rack-search');
 
-      if (title) title.innerText = 'DANH MỤC VỊ TRÍ ' + safeKey + ' (' + (isLanh ? 'KHO LẠNH' : 'KHO X6') + ')';
+      if (title) title.innerText = 'DANH MỤC VỊ TRÍ ' + safeKey + ' (' + khoTitleName + ')';
       if (pill) pill.innerText = items.length + ' Mã Vật Tư';
       if (searchInp) searchInp.value = '';
 
       renderPopupItems(items);
       if (modal) modal.classList.remove('hidden');
     }
+
+    // Alias để hỗ trợ tương thích ngược
+    window.openRackDetailModal = openRackPopupModal;
 
     function closeRackPopupModal() {
       document.getElementById('rack-popup-modal')?.classList.add('hidden');
@@ -4257,18 +4296,22 @@
 
       container.innerHTML = items.map(i => {
         let badgeCls = (i.ageStatus === 'warning' ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800');
+        const isLanh = (i.kho || '').toLowerCase().includes('lạnh') || (i.kho || '').toLowerCase().includes('lanh');
+        const khoBadge = isLanh ? '<span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-cyan-100 text-cyan-900 border border-cyan-300">❄️ KHO LẠNH</span>' : '<span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-red-100 text-red-900 border border-red-300">🔴 KHO X6</span>';
+
         return '<div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between shadow-xs hover:bg-red-50/50 transition">' +
           '<div class="space-y-1">' +
           '<div class="flex items-center gap-2">' +
           '<button type="button" onclick="openMaterialDetailModal(\'' + i.ma + '\')" class="font-black text-red-700 hover:text-red-950 hover:underline font-mono text-sm cursor-pointer text-left flex items-center gap-1">' + escapeHTML(i.ma) + ' <i class="fa-solid fa-arrow-up-right-from-square text-[9px] opacity-70"></i></button>' +
+          khoBadge +
           '<span class="px-2 py-0.5 rounded text-[10px] font-bold ' + badgeCls + '">⏳ ' + (i.ageDays || 0) + 'd</span>' +
           '</div>' +
           '<p class="text-xs font-semibold text-slate-700">' + escapeHTML(i.ten) + '</p>' +
           '<p class="text-[11px] text-slate-500 font-mono">Nhập gần nhất: ' + escapeHTML(i.oldestDate || 'N/A') + '</p>' +
           '</div>' +
           '<div class="text-right">' +
-          '<span class="text-base font-black text-red-700 block">' + formatNum(i.ton) + ' ' + escapeHTML(i.dvt || 'Lít') + '</span>' +
-          '<span class="text-[11px] font-bold text-slate-500">' + escapeHTML(i.kho) + '</span>' +
+          '<span class="text-base font-black text-red-700 block font-mono">' + formatNum(i.ton) + ' ' + escapeHTML(i.dvt || 'Lít') + '</span>' +
+          '<span class="text-[11px] font-bold text-slate-500">' + escapeHTML(i.kho) + ' - Kệ ' + escapeHTML(i.vt) + '</span>' +
           '</div>' +
           '</div>';
       }).join('');
@@ -4363,446 +4406,6 @@
       }
     }
 
-    async function handleQrFileScan(inputEl) {
-      if (!inputEl.files || !inputEl.files.length) return;
-      const file = inputEl.files[0];
-      const statusText = document.getElementById('qr-scan-status-text');
-      if (statusText) statusText.innerText = 'Đang nhận diện mã QR từ hình ảnh...';
-
-      const loaded = await ensureHtml5QrLoaded();
-      if (!loaded) return;
-
-      const scanner = html5QrScanner || new Html5Qrcode("qr-reader");
-      scanner.scanFile(file, true)
-        .then(decodedText => {
-          onQrCodeDetected(decodedText);
-        })
-        .catch(err => {
-          if (statusText) statusText.innerHTML = '<span class="text-red-600 font-bold">Không tìm thấy mã QR trong ảnh. Vui lòng chụp rõ nét hơn!</span>';
-        });
-    }
-
-    function onQrCodeDetected(qrText) {
-      closeQrScannerModal();
-
-      let text = (qrText || '').trim();
-      console.log('Processing detected QR:', text);
-
-      // 1. Kiểm tra nếu là Mã Vật Tư (mvt=..., mavt=..., MVT:...)
-      if (text.includes('mvt=') || text.includes('mavt=')) {
-        const match = text.match(/m(?:a)?vt=([a-zA-Z0-9_.-]+)/i);
-        if (match && match[1]) {
-          openMaterialDetailModal(decodeURIComponent(match[1]));
-          return;
-        }
-      }
-
-      if (text.toUpperCase().startsWith('MVT:')) {
-        const mvt = text.substring(4).trim();
-        openMaterialDetailModal(mvt);
-        return;
-      }
-
-      // 2. Kiểm tra nếu là Vị Trí Kệ (vitri=..., vt=...)
-      if (text.includes('vitri=') || text.includes('vt=')) {
-        const match = text.match(/v(?:itri|t)=([a-zA-Z0-9_-]+)/i);
-        if (match && match[1]) {
-          locateAndHighlightRack(decodeURIComponent(match[1]));
-          return;
-        }
-      }
-
-      if (text.includes('#')) {
-        const hash = text.split('#')[1] || '';
-        if (hash.startsWith('mvt=')) {
-          openMaterialDetailModal(decodeURIComponent(hash.replace('mvt=', '')));
-          return;
-        }
-        if (hash.startsWith('vitri=')) {
-          locateAndHighlightRack(decodeURIComponent(hash.replace('vitri=', '')));
-          return;
-        }
-      }
-
-      // 3. Kiểm tra nếu chuỗi khớp trực tiếp với Mã VT trong kho
-      const upper = text.toUpperCase();
-      const isMvtMatch = (globalData.inventory || []).some(i => (i.ma || '').toUpperCase() === upper) ||
-        (globalData.logs || []).some(l => (l.ma || '').toUpperCase() === upper);
-      if (isMvtMatch) {
-        openMaterialDetailModal(upper);
-        return;
-      }
-
-      // 4. Kiểm tra nếu chuỗi khớp trực tiếp với Vị trí kệ
-      const isRackMatch = POSITIONS_X6.includes(upper) || POSITIONS_LANH.includes(upper);
-      if (isRackMatch) {
-        locateAndHighlightRack(upper);
-        return;
-      }
-
-      // 5. Nếu không rõ, tìm kiếm trong tồn kho
-      const fuzzyMvt = (globalData.inventory || []).find(i => (i.ma || '').toUpperCase().includes(upper));
-      if (fuzzyMvt) {
-        openMaterialDetailModal(fuzzyMvt.ma);
-        return;
-      }
-
-      showModal('Đã quét được nội dung: "' + text + '" nhưng không khớp với mã vật tư hoặc vị trí kệ nào trong kho.', 'info');
-    }
-
-    function locateAndHighlightRack(rackKey) {
-      if (!rackKey) return;
-      const safeKey = rackKey.toUpperCase().trim();
-      const inLanh = POSITIONS_LANH.includes(safeKey);
-      const inX6 = POSITIONS_X6.includes(safeKey);
-
-      const targetKho = inLanh ? 'lanh' : (inX6 ? 'x6' : currentLayoutKho);
-
-      // Đóng modal chi tiết nếu đang mở
-      closeMaterialDetailModal();
-      closeQrGeneratorModal();
-
-      // Chuyển sang tab layout
-      const layoutTabBtn = document.querySelectorAll('.menu-item')[3];
-      switchTab('layout', layoutTabBtn);
-      drawLayout(targetKho);
-
-      setTimeout(() => {
-        const box = document.querySelector('.box-vt[data-vt="' + safeKey + '"]');
-        if (box) {
-          box.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-          box.classList.add('radar-active');
-          setTimeout(() => {
-            box.classList.remove('radar-active');
-          }, 4000);
-        }
-        openRackPopupModal(safeKey);
-      }, 300);
-    }
-
-    function checkUrlForParam() {
-      const hash = window.location.hash || '';
-      const params = new URLSearchParams(window.location.search);
-
-      // Check Material Code
-      let mvt = params.get('mvt') || params.get('mavt');
-      if (!mvt && hash.includes('mvt=')) {
-        const match = hash.match(/m(?:a)?vt=([a-zA-Z0-9_.-]+)/i);
-        if (match) mvt = decodeURIComponent(match[1]);
-      }
-
-      if (mvt) {
-        setTimeout(() => {
-          openMaterialDetailModal(mvt);
-        }, 600);
-        return;
-      }
-
-      // Check Rack Location
-      let vt = params.get('vitri') || params.get('vt');
-      if (!vt && hash.includes('vitri=')) {
-        const match = hash.match(/v(?:itri|t)=([a-zA-Z0-9_-]+)/i);
-        if (match) vt = decodeURIComponent(match[1]);
-      }
-
-      if (vt) {
-        setTimeout(() => {
-          locateAndHighlightRack(vt);
-        }, 600);
-      }
-    }
-
-    // =========================================================================
-    // TRUNG TÂM IN TEM MÃ QR (TEM VỊ TRÍ & TEM MÃ VẬT TƯ 100x40mm & 100x60mm)
-    // =========================================================================
-    function populateQrRackOptions() {
-      const select = document.getElementById('qr-rack-filter-select');
-      if (!select) return;
-
-      select.innerHTML = '<option value="ALL">Tất cả vị trí Kho X6 & Kho Lạnh</option>' +
-        '<optgroup label="Kho X6">' +
-        POSITIONS_X6.map(r => '<option value="X6_' + r + '">Kho X6 - Vị trí ' + r + '</option>').join('') +
-        '</optgroup>' +
-        '<optgroup label="Kho Lạnh">' +
-        POSITIONS_LANH.map(r => '<option value="LANH_' + r + '">Kho Lạnh - Vị trí ' + r + '</option>').join('') +
-        '</optgroup>';
-    }
-
-    function openQrGeneratorModal(initialMode, searchCode) {
-      const modal = document.getElementById('qr-generator-modal');
-      if (modal) modal.classList.remove('hidden');
-      populateQrRackOptions();
-
-      if (initialMode) {
-        setQrGenMode(initialMode);
-      }
-      if (searchCode) {
-        const inp = document.getElementById('qr-mvt-search-inp');
-        if (inp) inp.value = searchCode;
-      }
-      renderQrPrintCards();
-    }
-
-    function closeQrGeneratorModal() {
-      document.getElementById('qr-generator-modal')?.classList.add('hidden');
-    }
-
-    function setQrGenMode(mode) {
-      qrGenMode = mode;
-      const rackBtn = document.getElementById('qr-tab-rack-btn');
-      const mvtBtn = document.getElementById('qr-tab-mvt-btn');
-      const rackFilter = document.getElementById('qr-rack-filter-wrap');
-      const mvtFilter = document.getElementById('qr-mvt-filter-wrap');
-
-      if (mode === 'rack') {
-        if (rackBtn) {
-          rackBtn.className = 'px-3.5 py-1.5 rounded-xl font-black transition bg-red-700 text-yellow-300 shadow-xs cursor-pointer';
-        }
-        if (mvtBtn) {
-          mvtBtn.className = 'px-3.5 py-1.5 rounded-xl font-bold transition text-slate-700 hover:bg-slate-200 cursor-pointer';
-        }
-        if (rackFilter) rackFilter.classList.remove('hidden');
-        if (mvtFilter) mvtFilter.classList.add('hidden');
-      } else {
-        if (mvtBtn) {
-          mvtBtn.className = 'px-3.5 py-1.5 rounded-xl font-black transition bg-red-700 text-yellow-300 shadow-xs cursor-pointer';
-        }
-        if (rackBtn) {
-          rackBtn.className = 'px-3.5 py-1.5 rounded-xl font-bold transition text-slate-700 hover:bg-slate-200 cursor-pointer';
-        }
-        if (rackFilter) rackFilter.classList.add('hidden');
-        if (mvtFilter) mvtFilter.classList.remove('hidden');
-      }
-
-      renderQrPrintCards();
-    }
-
-    function setQrLabelSize(size) {
-      currentQrLabelSize = size;
-      const btn40 = document.getElementById('qr-size-btn-100x40');
-      const btn60 = document.getElementById('qr-size-btn-100x60');
-
-      if (size === '100x40') {
-        if (btn40) btn40.className = 'px-3 py-1.5 rounded-xl border font-bold transition bg-red-600 text-white border-red-700 shadow-sm cursor-pointer';
-        if (btn60) btn60.className = 'px-3 py-1.5 rounded-xl border font-bold transition bg-white text-slate-700 border-slate-300 hover:bg-slate-100 cursor-pointer';
-      } else {
-        if (btn60) btn60.className = 'px-3 py-1.5 rounded-xl border font-bold transition bg-red-600 text-white border-red-700 shadow-sm cursor-pointer';
-        if (btn40) btn40.className = 'px-3 py-1.5 rounded-xl border font-bold transition bg-white text-slate-700 border-slate-300 hover:bg-slate-100 cursor-pointer';
-      }
-      renderQrPrintCards();
-    }
-
-    function renderQrPrintCards() {
-      const container = document.getElementById('printable-qr-area');
-      const countText = document.getElementById('qr-print-count-text');
-      if (!container) return;
-
-      container.innerHTML = '';
-      const is40 = currentQrLabelSize === '100x40';
-      const cardClass = is40 ? 'qr-label-card-100x40' : 'qr-label-card-100x60';
-      const qrPixelSize = is40 ? 110 : 160;
-      const baseUrl = window.location.origin + window.location.pathname;
-
-      if (qrGenMode === 'rack') {
-        // ======================= CHẾ ĐỘ 1: TEM VỊ TRÍ KỆ =======================
-        const selVal = document.getElementById('qr-rack-filter-select')?.value || 'ALL';
-        let listToPrint = [];
-
-        if (selVal === 'ALL') {
-          POSITIONS_X6.forEach(r => listToPrint.push({ kho: 'KHO X6', vt: r, fullCode: r }));
-          POSITIONS_LANH.forEach(r => listToPrint.push({ kho: 'KHO LẠNH', vt: r, fullCode: r }));
-        } else if (selVal.startsWith('X6_')) {
-          const r = selVal.replace('X6_', '');
-          listToPrint.push({ kho: 'KHO X6', vt: r, fullCode: r });
-        } else if (selVal.startsWith('LANH_')) {
-          const r = selVal.replace('LANH_', '');
-          listToPrint.push({ kho: 'KHO LẠNH', vt: r, fullCode: r });
-        }
-
-        if (countText) {
-          countText.textContent = 'Đang hiển thị ' + listToPrint.length + ' tem vị trí kệ (' + currentQrLabelSize + 'mm)';
-        }
-
-        listToPrint.forEach((item, index) => {
-          const qrUrl = baseUrl + '#vitri=' + encodeURIComponent(item.fullCode);
-          const qrId = 'qr_canvas_rack_' + index + '_' + Date.now();
-
-          // Thống kê nhanh số vật tư trong vị trí này
-          const itemsInRack = (globalData.inventory || []).filter(i => {
-            const isMatchKho = (item.kho === 'KHO LẠNH') ? ((i.kho || '').includes('LẠNH') || (i.kho || '').includes('LANH')) : !(i.kho || '').includes('LẠNH');
-            return isMatchKho && i.vt === item.vt && i.ton !== 0;
-          });
-          const countMvt = itemsInRack.length;
-          const totTonInRack = itemsInRack.reduce((acc, i) => acc + i.ton, 0);
-
-          const card = document.createElement('div');
-          card.className = cardClass + ' bg-white text-slate-900 border-2 border-slate-900 rounded-lg flex flex-row items-center justify-between p-2 shadow-xs';
-
-          card.innerHTML =
-            '<div class="flex flex-col justify-between h-full flex-1 pr-2 select-none overflow-hidden">' +
-            '<div>' +
-            '<div class="flex items-center gap-1.5 pb-1 border-b border-slate-300">' +
-            '<img src="' + DAIDUNG_LOGO_BASE64 + '" alt="Dai Dung Logo" class="h-6 w-auto object-contain shrink-0" />' +
-            '<div class="leading-none">' +
-            '<div class="text-[9px] font-black text-red-700 uppercase tracking-tighter">ĐẠI DŨNG (DDC-LA)</div>' +
-            '<div class="text-[7.5px] font-bold text-slate-600 uppercase">KHO SƠN DDC-LA</div>' +
-            '</div>' +
-            '</div>' +
-            '<div class="mt-1">' +
-            '<div class="text-[10px] font-extrabold uppercase text-slate-700">' + item.kho + '</div>' +
-            '<div class="text-2xl font-black text-red-700 tracking-tight font-mono leading-none mt-0.5">' + item.vt + '</div>' +
-            '</div>' +
-            '</div>' +
-            '<div class="text-[8.5px] font-bold text-slate-500 pt-1 border-t border-slate-200 flex items-center justify-between">' +
-            '<span class="text-red-600 font-extrabold text-[7.5px]">QUÉT XEM SƠ ĐỒ</span>' +
-            '</div>' +
-            '</div>' +
-            '<div class="shrink-0 flex flex-col items-center justify-center pl-1 border-l border-slate-200">' +
-            '<div id="' + qrId + '" class="p-0.5 bg-white border border-slate-900 rounded"></div>' +
-            '<span class="text-[8px] font-mono font-bold text-slate-500 mt-0.5">' + item.fullCode + '</span>' +
-            '</div>';
-
-          container.appendChild(card);
-
-          setTimeout(() => {
-            const qrContainer = document.getElementById(qrId);
-            if (qrContainer && typeof QRCode !== 'undefined') {
-              qrContainer.innerHTML = '';
-              new QRCode(qrContainer, {
-                text: qrUrl,
-                width: qrPixelSize,
-                height: qrPixelSize,
-                colorDark: '#000000',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.M
-              });
-            }
-          }, 30);
-        });
-
-      } else {
-        // ======================= CHẾ ĐỘ 2: TEM MÃ VẬT TƯ =======================
-        const filterStock = document.getElementById('qr-mvt-filter-select')?.value || 'HAS_STOCK';
-        const searchKw = (document.getElementById('qr-mvt-search-inp')?.value || '').toLowerCase().trim();
-
-        // Tổng hợp danh sách vật tư duy nhất theo Mã VT
-        const mvtMap = {};
-        (globalData.inventory || []).forEach(item => {
-          const ma = item.ma;
-          if (!mvtMap[ma]) {
-            mvtMap[ma] = {
-              ma: ma,
-              ten: item.ten || '',
-              dvt: item.dvt || 'Lít',
-              totTon: 0,
-              totNhap: 0,
-              totXuat: 0,
-              locations: []
-            };
-          }
-          mvtMap[ma].totTon += item.ton;
-          mvtMap[ma].totNhap += item.nhap;
-          mvtMap[ma].totXuat += item.xuat;
-          if (item.ton !== 0) {
-            mvtMap[ma].locations.push({ kho: item.kho, vt: item.vt, ton: item.ton, ageDays: item.ageDays, ageStatus: item.ageStatus });
-          }
-        });
-
-        let listToPrint = Object.values(mvtMap);
-
-        // Lọc theo từ khóa tìm kiếm hoặc tồn kho
-        if (searchKw) {
-          listToPrint = listToPrint.filter(m =>
-            m.ma.toLowerCase().includes(searchKw) ||
-            m.ten.toLowerCase().includes(searchKw) ||
-            m.locations.some(l => l.vt.toLowerCase().includes(searchKw) || l.kho.toLowerCase().includes(searchKw))
-          );
-        } else if (filterStock === 'HAS_STOCK') {
-          listToPrint = listToPrint.filter(m => m.totTon !== 0);
-        }
-
-        // Sắp xếp mã VT A-Z
-        listToPrint.sort((a, b) => a.ma.localeCompare(b.ma));
-
-        if (countText) {
-          countText.textContent = 'Đang hiển thị ' + listToPrint.length + ' tem mã vật tư (' + currentQrLabelSize + 'mm)';
-        }
-
-        if (listToPrint.length === 0) {
-          container.innerHTML = '<div class="p-8 text-center text-slate-400 font-bold italic">Không có mã vật tư nào khớp với bộ lọc</div>';
-          return;
-        }
-
-        listToPrint.slice(0, 150).forEach((item, index) => {
-          const qrUrl = baseUrl + '#mvt=' + encodeURIComponent(item.ma);
-          const qrId = 'qr_canvas_mvt_' + index + '_' + Date.now();
-
-          // Chuỗi vị trí tồn
-          let locText = 'Chưa có vị trí';
-          if (item.locations.length > 0) {
-            locText = item.locations.map(l => l.vt + ' (' + formatNum(l.ton) + ')').join(', ');
-          }
-
-          const card = document.createElement('div');
-          card.className = cardClass + ' bg-white text-slate-900 border-2 border-slate-900 rounded-lg flex flex-row items-center justify-between p-2 shadow-xs';
-
-          card.innerHTML =
-            '<div class="flex flex-col justify-between h-full flex-1 pr-2 select-none overflow-hidden">' +
-            '<div>' +
-            '<div class="flex items-center gap-1.5 pb-1 border-b border-slate-300">' +
-            '<img src="' + DAIDUNG_LOGO_BASE64 + '" alt="Dai Dung Logo" class="h-5 sm:h-6 w-auto object-contain shrink-0" />' +
-            '<div class="leading-none">' +
-            '<div class="text-[8.5px] font-black text-red-700 uppercase tracking-tighter">ĐẠI DŨNG (DDC-LA)</div>' +
-            '<div class="text-[7px] font-bold text-slate-600 uppercase">NHÃN VẬT TƯ SƠN LONG AN</div>' +
-            '</div>' +
-            '</div>' +
-            '<div class="mt-1 space-y-0.5">' +
-            '<div class="text-[13px] font-black text-red-700 font-mono tracking-tight leading-none truncate" title="' + escapeHTML(item.ma) + '">' +
-            item.ma +
-            '</div>' +
-            '<div class="text-[9.5px] font-bold text-slate-900 line-clamp-2 leading-tight" title="' + escapeHTML(item.ten) + '">' +
-            (item.ten || 'Chưa đặt tên vật tư') +
-            '</div>' +
-            '</div>' +
-            '</div>' +
-            '<div class="text-[8.5px] font-bold text-slate-700 pt-1 border-t border-slate-200 flex flex-col gap-0.5">' +
-            '<div class="flex items-center justify-between">' +
-            '<span>Tồn: <b class="text-red-700 font-black font-mono">' + formatNum(item.totTon) + ' ' + (item.dvt || 'Lít') + '</b></span>' +
-            '<span class="text-[7.5px] text-red-600 font-extrabold uppercase">QUÉT XEM CHI TIẾT</span>' +
-            '</div>' +
-            '<div class="text-[8px] text-slate-500 truncate" title="' + escapeHTML(locText) + '">' +
-            'VT: <span class="font-bold text-slate-800">' + escapeHTML(locText) + '</span>' +
-            '</div>' +
-            '</div>' +
-            '</div>' +
-            '<div class="shrink-0 flex flex-col items-center justify-center pl-1 border-l border-slate-200">' +
-            '<div id="' + qrId + '" class="p-0.5 bg-white border border-slate-900 rounded"></div>' +
-            '<span class="text-[7.5px] font-mono font-bold text-slate-500 mt-0.5">' + item.ma.substring(0, 10) + '</span>' +
-            '</div>';
-
-          container.appendChild(card);
-
-          setTimeout(() => {
-            const qrContainer = document.getElementById(qrId);
-            if (qrContainer && typeof QRCode !== 'undefined') {
-              qrContainer.innerHTML = '';
-              new QRCode(qrContainer, {
-                text: qrUrl,
-                width: qrPixelSize,
-                height: qrPixelSize,
-                colorDark: '#000000',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.M
-              });
-            }
-          }, 30);
-        });
-      }
-    }
-
-    // =========================================================================
-    // MODAL 6: CHI TIẾT VẬT TƯ (TỒN TẠI TỪNG VỊ TRÍ & LỊCH SỬ NHẬP XUẤT)
-    // =========================================================================
     function openMaterialDetailModal(mvtCode) {
       if (!mvtCode) return;
       const safeCode = (mvtCode || '').trim().toUpperCase();
@@ -4930,7 +4533,7 @@
               formatNum(loc.ton) + ' <span class="text-xs font-bold text-slate-600">' + escapeHTML(loc.dvt || mvtDvt) + '</span>' +
               '</div>' +
               '</div>' +
-              '<button type="button" onclick="closeMaterialDetailModal(); locateAndHighlightRack(\'' + loc.vt + '\')" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs shadow-xs transition flex items-center gap-1.5 active:scale-95 cursor-pointer shrink-0">' +
+              '<button type="button" onclick="closeMaterialDetailModal(); locateAndHighlightRack(\'' + escapeHTML(loc.vt) + '\', \'' + (isLanh ? 'lanh' : 'x6') + '\')" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs shadow-xs transition flex items-center gap-1.5 active:scale-95 cursor-pointer shrink-0">' +
               '<i class="fa-solid fa-map-location-dot"></i>' +
               '<span>Xem Trên Sơ Đồ</span>' +
               '</button>' +
