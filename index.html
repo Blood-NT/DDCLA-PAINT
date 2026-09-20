@@ -35,6 +35,15 @@
   <!-- Note: SheetJS (xlsx) & Html5Qrcode are loaded on-demand dynamically to save ~1.5MB initial payload -->
 
   <style>
+    html,
+    body {
+      height: 100% !important;
+      height: 100dvh !important;
+      margin: 0;
+      padding: 0;
+      overflow: hidden !important;
+    }
+
     body {
       font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: #f8fafc;
@@ -72,16 +81,29 @@
       color: #b91c1c;
     }
 
+    #main-content-wrapper {
+      flex: 1 1 0%;
+      min-height: 0;
+      min-width: 0;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      -webkit-overflow-scrolling: touch !important;
+      touch-action: pan-y !important;
+      padding-bottom: 5.5rem !important;
+    }
+
     .tab-content {
       display: none;
-      height: 100%;
+      min-height: 0;
       flex-direction: column;
-      overflow: hidden;
+      width: 100%;
     }
 
     .active-tab {
       display: flex;
-      overflow-y: auto;
+      flex-direction: column;
+      width: 100%;
+      min-height: 0;
     }
 
     th,
@@ -109,15 +131,19 @@
     }
 
     .table-container {
-      max-height: calc(100vh - 210px);
-      overflow-y: auto;
+      width: 100%;
       overflow-x: auto;
+      overflow-y: visible;
       -webkit-overflow-scrolling: touch;
+      position: relative;
     }
 
     .map-scroll-container {
       overflow-x: auto;
+      overflow-y: hidden;
       -webkit-overflow-scrolling: touch;
+      touch-action: pan-x pan-y;
+      overscroll-behavior-x: contain;
     }
 
     /* BOX VỊ TRÍ TRONG SƠ ĐỒ KHO */
@@ -249,16 +275,11 @@
       transition: opacity 0.2s;
     }
 
-    @media (max-width: 767px) {
-
+    @media (max-width: 1024px) {
       th,
       td {
         padding: 6px 6px;
         font-size: 12px;
-      }
-
-      .table-container {
-        max-height: calc(100vh - 235px);
       }
 
       #customTooltip {
@@ -528,7 +549,7 @@
   <!-- ========================================================================= -->
   <!-- MAIN CONTENT AREA -->
   <!-- ========================================================================= -->
-  <main class="flex-1 flex flex-col h-full overflow-hidden pt-16 md:pt-0">
+  <main id="main-content" class="flex-1 flex flex-col h-full overflow-hidden pt-16 md:pt-0">
 
     <!-- Top Header Bar -->
     <header
@@ -566,7 +587,7 @@
     </header>
 
     <!-- Content Tabs Wrapper -->
-    <div class="flex-1 p-3 md:p-5 overflow-hidden flex flex-col bg-[#fcfcfc]">
+    <div id="main-content-wrapper" class="flex-1 p-3 md:p-5 overflow-y-auto overflow-x-hidden flex flex-col bg-[#fcfcfc] custom-scrollbar">
 
       <!-- ========================================================================= -->
       <!-- TAB 1: TÌM KIẾM & TỒN KHO -->
@@ -583,7 +604,7 @@
 
         <!-- Inventory Table -->
         <div
-          class="bg-white border-2 border-red-100 rounded-xl shadow-sm table-container flex-1 overflow-auto relative">
+          class="bg-white border-2 border-red-100 rounded-xl shadow-sm table-container overflow-x-auto relative">
           <table class="w-full text-sm" id="tableSearch">
             <thead class="bg-red-700 text-yellow-300 sticky top-0 z-10 shadow cursor-pointer select-none">
               <tr>
@@ -684,7 +705,7 @@
         </div>
 
         <div
-          class="bg-white border-2 border-red-100 rounded-xl shadow-sm table-container flex-1 overflow-auto relative">
+          class="bg-white border-2 border-red-100 rounded-xl shadow-sm table-container overflow-x-auto relative">
           <table id="tableOverview" class="w-full text-sm">
             <thead class="bg-red-700 text-yellow-300 sticky top-0 z-10 shadow cursor-pointer select-none">
               <tr>
@@ -834,7 +855,7 @@
 
         <!-- SUB-TAB 1: BÁO CÁO TỔNG QUAN & BIỂU ĐỒ -->
         <div id="report-tongquan"
-          class="flex flex-col h-full overflow-y-auto bg-transparent p-1 gap-5 flex-1 custom-scrollbar">
+          class="flex flex-col bg-transparent p-1 gap-5 w-full">
           <!-- Hàng 1 -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="bg-white p-4 border border-red-100 rounded-xl shadow-sm">
@@ -880,9 +901,9 @@
         </div>
 
         <!-- SUB-TAB 2: BÁO CÁO THEO DỰ ÁN -->
-        <div id="report-duan" class="hidden flex-col h-full overflow-hidden flex-1">
+        <div id="report-duan" class="hidden flex-col w-full">
           <div
-            class="bg-white border-2 border-red-100 rounded-xl shadow-sm table-container flex-1 overflow-auto relative">
+            class="bg-white border-2 border-red-100 rounded-xl shadow-sm table-container overflow-x-auto relative">
             <table class="w-full text-xs" id="tableExportDuAn">
               <thead class="bg-red-700 text-yellow-300 sticky top-0 z-10 shadow cursor-pointer select-none">
                 <tr>
@@ -928,9 +949,9 @@
         </div>
 
         <!-- SUB-TAB 3: BÁO CÁO CHI TIẾT -->
-        <div id="report-chitiet" class="hidden flex-col h-full overflow-hidden flex-1">
+        <div id="report-chitiet" class="hidden flex-col w-full">
           <div
-            class="bg-white border-2 border-red-100 rounded-xl shadow-sm table-container flex-1 overflow-auto relative">
+            class="bg-white border-2 border-red-100 rounded-xl shadow-sm table-container overflow-x-auto relative">
             <table class="w-full text-xs" id="tableExport">
               <thead class="bg-red-700 text-yellow-300 sticky top-0 z-10 shadow cursor-pointer select-none">
                 <tr>
@@ -1017,13 +1038,13 @@
 
         <!-- Sơ đồ trực quan -->
         <div id="drawArea"
-          class="bg-white p-3 md:p-6 border-2 border-red-100 rounded-2xl shadow-sm flex-shrink-0 overflow-auto">
+          class="bg-white p-2 sm:p-4 border-2 border-red-100 rounded-2xl shadow-sm flex-shrink-0 overflow-x-auto">
           <!-- Injected via JavaScript -->
         </div>
 
         <!-- Danh sách tồn kho theo Layout đang chọn -->
         <div
-          class="bg-white border-2 border-red-100 rounded-2xl shadow-sm table-container flex-1 overflow-auto relative">
+          class="bg-white border-2 border-red-100 rounded-2xl shadow-sm table-container overflow-x-auto relative">
           <div class="flex justify-between items-center p-3 bg-red-50 border-b border-red-200 sticky top-0 z-20">
             <h3 class="font-black text-red-800 uppercase text-xs md:text-sm tracking-wide" id="layoutKhoTitle">
               DANH SÁCH TỒN KHO THEO VỊ TRÍ
@@ -1170,7 +1191,7 @@
 
         <!-- Table -->
         <div
-          class="bg-white border-2 border-red-100 rounded-2xl shadow-sm table-container flex-1 overflow-auto relative">
+          class="bg-white border-2 border-red-100 rounded-2xl shadow-sm table-container overflow-x-auto relative">
           <table class="w-full text-xs" id="tableKiemKe">
             <thead class="bg-red-700 text-yellow-300 sticky top-0 z-10 shadow select-none cursor-pointer">
               <tr>
@@ -1284,7 +1305,7 @@
         </div>
 
         <div
-          class="bg-white border-2 border-red-100 rounded-xl shadow-sm table-container flex-1 overflow-auto relative">
+          class="bg-white border-2 border-red-100 rounded-xl shadow-sm table-container overflow-x-auto relative">
           <table class="w-full text-xs" id="tableHistory">
             <thead class="bg-red-700 text-yellow-300 sticky top-0 z-10 shadow select-none">
               <tr>
@@ -2158,6 +2179,13 @@
           overlay?.classList.add('hidden');
         }
       }
+
+      // Reset scroll position on tab change
+      const wrapper = document.getElementById('main-content-wrapper');
+      if (wrapper) wrapper.scrollTop = 0;
+      const main = document.getElementById('main-content');
+      if (main) main.scrollTop = 0;
+      window.scrollTo(0, 0);
 
       if (tabId === 'layout') drawLayout(currentLayoutKho);
       else if (tabId === 'overview') renderOverview('lanh');
@@ -3522,21 +3550,21 @@
 
       if (currentLayoutKho === 'x6') {
         area.innerHTML = `
-          <div class="map-scroll-container overflow-x-auto p-2 w-full flex justify-start md:justify-center custom-scrollbar">
-            <div class="grid min-w-[860px] max-w-[1100px] w-full gap-2.5 md:gap-3.5 relative select-none" 
+          <div class="map-scroll-container overflow-x-auto p-1 sm:p-2 w-full flex justify-start custom-scrollbar" style="touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;">
+            <div class="grid min-w-[760px] md:min-w-[820px] max-w-[1100px] w-full gap-2 sm:gap-2.5 md:gap-3.5 relative select-none mx-auto" 
                  style="grid-template-columns: repeat(10, 1fr);">
-              ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => `<div class="box-vt h-16 md:h-20 text-sm md:text-lg shadow-sm" data-vt="A${i}">A${i}</div>`).join('')}
-              <div class="bg-[#8A1414] text-[#FACC15] col-span-10 h-14 md:h-20 my-1 md:my-2 flex items-center justify-center font-black tracking-widest text-sm md:text-xl rounded-xl shadow-md border-2 border-yellow-500">
+              ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => `<div class="box-vt h-14 sm:h-16 md:h-20 text-xs sm:text-sm md:text-lg shadow-sm" data-vt="A${i}">A${i}</div>`).join('')}
+              <div class="bg-[#8A1414] text-[#FACC15] col-span-10 h-12 sm:h-14 md:h-20 my-1 md:my-2 flex items-center justify-center font-black tracking-widest text-xs sm:text-sm md:text-xl rounded-xl shadow-md border-2 border-yellow-500">
                 <i class="fa-solid fa-road mr-2 md:mr-3"></i> ĐƯỜNG ĐI CHÍNH KHO X6
               </div>
-              ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => `<div class="box-vt h-16 md:h-20 text-sm md:text-lg shadow-sm" data-vt="B${i}">B${i}</div>`).join('')}
+              ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => `<div class="box-vt h-14 sm:h-16 md:h-20 text-xs sm:text-sm md:text-lg shadow-sm" data-vt="B${i}">B${i}</div>`).join('')}
             </div>
           </div>
         `;
       } else {
         area.innerHTML = `
-          <div class="map-scroll-container overflow-x-auto p-2 w-full flex justify-start md:justify-center custom-scrollbar">
-            <div class="grid min-w-[780px] max-w-[940px] w-full h-[260px] md:h-[280px] gap-2 md:gap-2.5 relative select-none" 
+          <div class="map-scroll-container overflow-x-auto p-1 sm:p-2 w-full flex justify-start custom-scrollbar" style="touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;">
+            <div class="grid min-w-[680px] md:min-w-[760px] max-w-[940px] w-full h-[240px] sm:h-[260px] md:h-[280px] gap-1.5 sm:gap-2 md:gap-2.5 relative select-none mx-auto" 
                  style="grid-template-columns: 19% 3.5% repeat(5, 1fr); grid-template-rows: 1fr 1.1fr 1.1fr 1fr;">
               
               <div class="box-vt col-start-1 col-end-2 row-start-1 row-end-2" data-vt="A3">A3</div>
@@ -3547,7 +3575,7 @@
               <div class="bg-[#8A1414] col-start-1 col-end-4 row-start-4 row-end-5 rounded-bl-lg -mt-2.5 md:-mt-3 z-0"></div>
               <div class="bg-[#8A1414] col-start-2 col-end-3 row-start-1 row-end-5 rounded-tl-lg -mr-2.5 md:-mr-3 z-0"></div>
 
-              <div class="bg-[#8A1414] col-start-2 col-end-8 row-start-2 row-end-4 flex items-center justify-center text-[#FACC15] font-black tracking-widest text-sm md:text-lg rounded-r-lg shadow-inner z-0 -mb-2.5 md:-mb-3">
+              <div class="bg-[#8A1414] col-start-2 col-end-8 row-start-2 row-end-4 flex items-center justify-center text-[#FACC15] font-black tracking-widest text-xs sm:text-sm md:text-lg rounded-r-lg shadow-inner z-0 -mb-2.5 md:-mb-3">
                 ĐƯỜNG ĐI CHÍNH KHO LẠNH
               </div>
 
@@ -4134,6 +4162,35 @@
       const htmlContent = (sheet && sheet.innerHTML.trim().length > 0) ? sheet.innerHTML : generateKiemKePrintHtml();
       const printContainer = document.getElementById('standalonePrintContainer');
       if (!printContainer) return;
+
+      // Thiết lập khổ in chuẩn A4 cho Phiếu kiểm kê
+      let dynamicStyle = document.getElementById('dynamic-print-page-style');
+      if (!dynamicStyle) {
+        dynamicStyle = document.createElement('style');
+        dynamicStyle.id = 'dynamic-print-page-style';
+        document.head.appendChild(dynamicStyle);
+      }
+      dynamicStyle.innerHTML = `
+        @page {
+          size: A4 portrait;
+          margin: 8mm;
+        }
+        @media print {
+          html, body {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #fff !important;
+          }
+          #standalonePrintContainer {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            display: block !important;
+          }
+        }
+      `;
+
       printContainer.innerHTML = htmlContent;
       setTimeout(() => {
         window.print();
@@ -4149,6 +4206,82 @@
       const printContainer = document.getElementById('standalonePrintContainer');
       if (!printContainer) return;
 
+      const is60 = currentQrLabelSize === '100x60';
+      const heightMm = is60 ? 60 : 40;
+
+      // Thiết lập style @page động đúng chuẩn kích thước từng tem: 1 tem = 1 trang in
+      let dynamicStyle = document.getElementById('dynamic-print-page-style');
+      if (!dynamicStyle) {
+        dynamicStyle = document.createElement('style');
+        dynamicStyle.id = 'dynamic-print-page-style';
+        document.head.appendChild(dynamicStyle);
+      }
+      dynamicStyle.innerHTML = `
+        @page {
+          size: 100mm ${heightMm}mm;
+          margin: 0mm !important;
+        }
+        @media print {
+          html, body {
+            width: 100mm !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          #standalonePrintContainer {
+            width: 100mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            display: block !important;
+          }
+          .qr-print-wrapper {
+            display: block !important;
+            width: 100mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          .qr-label-card-100x40,
+          .qr-label-card-100x60 {
+            width: 100mm !important;
+            max-width: 100mm !important;
+            min-width: 100mm !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+            page-break-after: always !important;
+            break-after: page !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            overflow: hidden !important;
+            border: 2.5px solid #000000 !important;
+            background: #ffffff !important;
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+          }
+          .qr-label-card-100x40 {
+            height: 40mm !important;
+            max-height: 40mm !important;
+            min-height: 40mm !important;
+            padding: 2.5mm 3.5mm !important;
+          }
+          .qr-label-card-100x60 {
+            height: 60mm !important;
+            max-height: 60mm !important;
+            min-height: 60mm !important;
+            padding: 3.5mm 4.5mm !important;
+          }
+          .qr-label-card-100x40:last-child,
+          .qr-label-card-100x60:last-child {
+            page-break-after: auto !important;
+            break-after: auto !important;
+          }
+        }
+      `;
+
       // Clone DOM và bảo toàn hình ảnh vẽ trên canvas
       const clone = printableArea.cloneNode(true);
       const origCanvases = printableArea.querySelectorAll('canvas');
@@ -4163,8 +4296,9 @@
 
       printContainer.innerHTML = '';
       const wrapper = document.createElement('div');
-      wrapper.style.cssText = 'display: flex; flex-direction: row; flex-wrap: wrap; gap: 4mm; padding: 2mm; background: #fff; width: 100%; justify-content: flex-start; align-items: flex-start;';
-      
+      wrapper.className = 'qr-print-wrapper';
+      wrapper.style.cssText = 'display: block; width: 100mm; margin: 0; padding: 0; background: #fff;';
+
       while (clone.firstChild) {
         wrapper.appendChild(clone.firstChild);
       }
@@ -4728,21 +4862,21 @@
 
         if (selVal === 'ALL') {
           if (khoFilter === 'ALL' || khoFilter === 'X6') {
-            POSITIONS_X6.forEach(r => listToPrint.push({ kho: 'KHO X6', khoKey: 'x6', vt: r, fullCode: 'X6-' + r, subtitle: 'SƠN THƯỜNG / KẾT CẤU' }));
+            POSITIONS_X6.forEach(r => listToPrint.push({ kho: 'KHO X6', khoKey: 'x6', vt: r, fullCode: 'X6-' + r, subtitle: '' }));
           }
           if (khoFilter === 'ALL' || khoFilter === 'LANH') {
-            POSITIONS_LANH.forEach(r => listToPrint.push({ kho: 'KHO LẠNH', khoKey: 'lanh', vt: r, fullCode: 'LANH-' + r, subtitle: 'SƠN BẢO QUẢN NHIỆT ĐỘ MÁT' }));
+            POSITIONS_LANH.forEach(r => listToPrint.push({ kho: 'KHO LẠNH', khoKey: 'lanh', vt: r, fullCode: 'LANH-' + r, subtitle: '' }));
           }
         } else if (selVal === 'ALL_X6') {
-          POSITIONS_X6.forEach(r => listToPrint.push({ kho: 'KHO X6', khoKey: 'x6', vt: r, fullCode: 'X6-' + r, subtitle: 'SƠN THƯỜNG / KẾT CẤU' }));
+          POSITIONS_X6.forEach(r => listToPrint.push({ kho: 'KHO X6', khoKey: 'x6', vt: r, fullCode: 'X6-' + r, subtitle: '' }));
         } else if (selVal === 'ALL_LANH') {
-          POSITIONS_LANH.forEach(r => listToPrint.push({ kho: 'KHO LẠNH', khoKey: 'lanh', vt: r, fullCode: 'LANH-' + r, subtitle: 'SƠN BẢO QUẢN NHIỆT ĐỘ MÁT' }));
+          POSITIONS_LANH.forEach(r => listToPrint.push({ kho: 'KHO LẠNH', khoKey: 'lanh', vt: r, fullCode: 'LANH-' + r, subtitle: '' }));
         } else if (selVal.startsWith('X6_')) {
           const r = selVal.replace('X6_', '');
-          listToPrint.push({ kho: 'KHO X6', khoKey: 'x6', vt: r, fullCode: 'X6-' + r, subtitle: 'SƠN THƯỜNG / KẾT CẤU' });
+          listToPrint.push({ kho: 'KHO X6', khoKey: 'x6', vt: r, fullCode: 'X6-' + r, subtitle: '' });
         } else if (selVal.startsWith('LANH_')) {
           const r = selVal.replace('LANH_', '');
-          listToPrint.push({ kho: 'KHO LẠNH', khoKey: 'lanh', vt: r, fullCode: 'LANH-' + r, subtitle: 'SƠN BẢO QUẢN NHIỆT ĐỘ MÁT' });
+          listToPrint.push({ kho: 'KHO LẠNH', khoKey: 'lanh', vt: r, fullCode: 'LANH-' + r, subtitle: '' });
         }
 
         if (countText) {
@@ -4776,13 +4910,13 @@
             '<div class="flex items-center gap-1.5 pb-1 border-b border-slate-300">' +
             '<img src="' + DAIDUNG_LOGO_BASE64 + '" alt="Dai Dung Logo" class="h-6 w-auto object-contain shrink-0" />' +
             '<div class="leading-none">' +
-            '<div class="text-[9px] font-black text-red-700 uppercase tracking-tighter">ĐẠI DŨNG (DDC-LA)</div>' +
-            '<div class="text-[7.5px] font-bold text-slate-600 uppercase">HỆ THỐNG KHO SƠN</div>' +
+            '<div class="text-[9px] font-black text-red-700 uppercase tracking-tighter">CÔNG TY CỔ PHẦN CƠ KHÍ XÂY DỰNG THƯƠNG MẠI ĐẠI DŨNG</div>' +
+            '<div class="text-[7.5px] font-bold text-slate-600 uppercase">KHO SƠN DDC-LA</div>' +
             '</div>' +
             '</div>' +
             '<div class="mt-1">' +
             '<div class="flex items-center gap-1">' +
-            '<span class="px-1.5 py-0.5 rounded text-[8.5px] font-black uppercase ' + badgeClass + '">' + (isLanh ? '❄️ KHO LẠNH' : '🔴 KHO X6') + '</span>' +
+            '<span class="px-1.5 py-0.5 rounded text-[8.5px] font-black uppercase ' + badgeClass + '">' + (isLanh ? 'KHO LẠNH' : 'KHO X6') + '</span>' +
             '<span class="text-[7.5px] font-bold text-slate-500 uppercase truncate">' + item.subtitle + '</span>' +
             '</div>' +
             '<div class="text-2xl sm:text-3xl font-black ' + rackCodeColor + ' tracking-tight font-mono leading-none mt-1">KỆ ' + item.vt + '</div>' +
@@ -4899,19 +5033,19 @@
           const tonX6 = item.locationsX6.reduce((acc, l) => acc + l.ton, 0);
           const tonLanh = item.locationsLanh.reduce((acc, l) => acc + l.ton, 0);
 
-          let locX6Text = item.locationsX6.length > 0 ? item.locationsX6.map(l => l.vt + ' (' + formatNum(l.ton) + ')').join(', ') : 'Trống';
-          let locLanhText = item.locationsLanh.length > 0 ? item.locationsLanh.map(l => l.vt + ' (' + formatNum(l.ton) + ')').join(', ') : 'Trống';
+          let locX6Text = item.locationsX6.length > 0 ? item.locationsX6.map(l => l.vt).join(', ') : 'Trống';
+          let locLanhText = item.locationsLanh.length > 0 ? item.locationsLanh.map(l => l.vt).join(', ') : 'Trống';
 
           let khoBadge = '';
-          if (tonX6 > 0 && tonLanh > 0) {
-            khoBadge = '<span class="px-1.5 py-0.2 rounded bg-purple-100 text-purple-900 border border-purple-300 font-black text-[7.5px]">🏛️ CẢ 2 KHO</span>';
-          } else if (tonLanh > 0) {
-            khoBadge = '<span class="px-1.5 py-0.2 rounded bg-cyan-100 text-cyan-900 border border-cyan-300 font-black text-[7.5px]">❄️ KHO LẠNH</span>';
-          } else if (tonX6 > 0) {
-            khoBadge = '<span class="px-1.5 py-0.2 rounded bg-red-100 text-red-900 border border-red-300 font-black text-[7.5px]">🔴 KHO X6</span>';
-          } else {
-            khoBadge = '<span class="px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-300 font-bold text-[7.5px]">HẾT TỒN</span>';
-          }
+          // if (tonX6 > 0 && tonLanh > 0) {
+          //   // khoBadge = '<span class="px-1.5 py-0.2 rounded bg-purple-100 text-purple-900 border border-purple-300 font-black text-[7.5px]">.............</span>';
+          // } else if (tonLanh > 0) {
+          //   // khoBadge = '<span class="px-1.5 py-0.2 rounded bg-cyan-100 text-cyan-900 border border-cyan-300 font-black text-[7.5px]">KHO LẠNH</span>';
+          // } else if (tonX6 > 0) {
+          //   // khoBadge = '<span class="px-1.5 py-0.2 rounded bg-red-100 text-red-900 border border-red-300 font-black text-[7.5px]">KHO X6</span>';
+          // } else {
+          //   // khoBadge = '<span class="px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-300 font-bold text-[7.5px]">HẾT TỒN</span>';
+          // }
 
           const card = document.createElement('div');
           card.className = cardClass + ' bg-white text-slate-900 border-2 border-slate-900 rounded-lg flex flex-row items-center justify-between p-2 shadow-xs';
@@ -4923,17 +5057,17 @@
             '<div class="flex items-center gap-1.5">' +
             '<img src="' + DAIDUNG_LOGO_BASE64 + '" alt="Dai Dung Logo" class="h-5 sm:h-6 w-auto object-contain shrink-0" />' +
             '<div class="leading-none">' +
-            '<div class="text-[8.5px] font-black text-red-700 uppercase tracking-tighter">ĐẠI DŨNG (DDC-LA)</div>' +
-            '<div class="text-[7px] font-bold text-slate-600 uppercase">KHO SƠN LONG AN</div>' +
+            '<div class="text-[8.5px] font-black text-red-700 uppercase tracking-tighter">CÔNG TY CỔ PHẦN CƠ KHÍ XÂY DỰNG THƯƠNG MẠI ĐẠI DŨNG</div>' +
+            '<div class="text-[7px] font-bold text-slate-600 uppercase">KHO SƠN DDC-LA</div>' +
             '</div>' +
             '</div>' +
             khoBadge +
             '</div>' +
             '<div class="mt-1 space-y-0.5">' +
-            '<div class="text-[13px] font-black text-red-700 font-mono tracking-tight leading-none truncate" title="' + escapeHTML(item.ma) + '">' +
+            '<div class="text-[20px] font-black text-red-700 font-mono tracking-tight leading-none truncate" title="' + escapeHTML(item.ma) + '">' +
             item.ma +
             '</div>' +
-            '<div class="text-[9px] font-bold text-slate-900 line-clamp-2 leading-tight" title="' + escapeHTML(item.ten) + '">' +
+            '<div class="text-[16px] font-bold text-slate-900 line-clamp-2 leading-tight" title="' + escapeHTML(item.ten) + '">' +
             (item.ten || 'Chưa đặt tên vật tư') +
             '</div>' +
             '</div>' +
@@ -4944,7 +5078,7 @@
             '<span class="truncate ' + (tonLanh > 0 ? 'text-blue-800 font-extrabold' : 'text-slate-400') + ' ml-1">Lạnh: ' + escapeHTML(locLanhText) + '</span>' +
             '</div>' +
             '<div class="flex items-center justify-between pt-0.5 border-t border-dashed border-slate-200">' +
-            '<span>Tổng tồn: <b class="text-red-700 font-black font-mono text-[9.5px]">' + formatNum(item.totTon) + ' ' + (item.dvt || 'Lít') + '</b></span>' +
+            // '<span>Tổng tồn: <b class="text-red-700 font-black font-mono text-[9.5px]">' + formatNum(item.totTon) + ' ' + (item.dvt || 'Lít') + '</b></span>' +
             '<span class="text-[7px] text-red-600 font-black uppercase">QUÉT XEM CHI TIẾT</span>' +
             '</div>' +
             '</div>' +
@@ -5112,8 +5246,12 @@
         }
       }
 
-      // 4. Lưu danh sách lịch sử và render bảng
-      matchedLogs.sort((a, b) => (b.dateNum || 0) - (a.dateNum || 0));
+      // 4. Lưu danh sách lịch sử và render bảng (Thứ tự từ CŨ đến MỚI theo yêu cầu)
+      matchedLogs.sort((a, b) => {
+        const timeA = (a.dateNum !== undefined && a.dateNum > 0) ? a.dateNum : parseDateToTimestamp(a.date);
+        const timeB = (b.dateNum !== undefined && b.dateNum > 0) ? b.dateNum : parseDateToTimestamp(b.date);
+        return timeA - timeB;
+      });
       currentMvtHistoryLogs = matchedLogs;
 
       const histInp = document.getElementById('mvt-history-search');
