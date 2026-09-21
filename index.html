@@ -150,19 +150,27 @@
     .box-vt {
       background: #FFFEF2;
       border: 1.5px solid #FCA5A5;
-      border-radius: 10px;
+      border-radius: 6px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       font-weight: 800;
-      font-size: 15px;
+      font-size: 12px;
       color: #8A1414;
       cursor: pointer;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       user-select: none;
-      min-height: 56px;
+      min-height: 28px;
       position: relative;
+    }
+
+    @media (min-width: 640px) {
+      .box-vt {
+        border-radius: 8px;
+        font-size: 13px;
+        min-height: 36px;
+      }
     }
 
     .box-vt:hover {
@@ -191,7 +199,8 @@
       z-index: 10;
     }
 
-    .box-vt.active-vt {
+    .box-vt.active-vt,
+    .box-vt.radar-active {
       border: 3px solid #dc2626 !important;
       background: #fef08a !important;
       box-shadow: 0 0 16px rgba(220, 38, 38, 0.8) !important;
@@ -435,19 +444,19 @@
   <!-- MOBILE TOP BAR -->
   <!-- ========================================================================= -->
   <div
-    class="md:hidden flex items-center justify-between bg-red-700 text-yellow-300 px-4 py-2 z-40 fixed top-0 w-full h-16 shadow-md border-b-2 border-yellow-400 no-print">
-    <div class="flex items-center gap-2 font-black text-base tracking-wide">
+    class="md:hidden flex items-center justify-between bg-red-700 text-yellow-300 px-3 py-1.5 z-40 fixed top-0 w-full h-12 shadow-md border-b-2 border-yellow-400 no-print">
+    <div class="flex items-center gap-2 font-black text-xs tracking-wide truncate">
       <img id="mobileLogo"
-        src="data:image/png;base64,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"
-        alt="DAI DUNG" class="h-8 w-auto object-contain bg-white px-1.5 py-0.5 rounded shadow-xs">
+        src="data:image/png;base64,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"
+        alt="DAI DUNG" class="h-6 w-auto object-contain bg-white px-1 py-0.5 rounded shadow-xs">
       <span>DDC-LA KHO SƠN</span>
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1.5 shrink-0">
       <button onclick="openQrScannerModal()"
-        class="px-2.5 py-1 bg-yellow-400 text-red-950 rounded-lg text-xs font-black shadow flex items-center gap-1">
-        <i class="fa-solid fa-qrcode"></i> Quét QR
+        class="px-2 py-1 bg-yellow-400 hover:bg-yellow-500 text-red-950 rounded-lg text-xs font-black shadow flex items-center gap-1 active:scale-95 transition cursor-pointer">
+        <i class="fa-solid fa-qrcode text-[11px]"></i> <span>Quét QR</span>
       </button>
-      <button onclick="toggleSidebar()" class="text-yellow-300 hover:text-white text-2xl focus:outline-none ml-1">
+      <button onclick="toggleSidebar()" class="text-yellow-300 hover:text-white text-xl focus:outline-none p-1 ml-0.5 cursor-pointer" aria-label="Menu">
         <i class="fa-solid fa-bars"></i>
       </button>
     </div>
@@ -549,13 +558,13 @@
   <!-- ========================================================================= -->
   <!-- MAIN CONTENT AREA -->
   <!-- ========================================================================= -->
-  <main id="main-content" class="flex-1 flex flex-col h-full overflow-hidden pt-16 md:pt-0">
+  <main id="main-content" class="flex-1 flex flex-col h-full overflow-hidden pt-12 md:pt-0">
 
     <!-- Top Header Bar -->
     <header
-      class="bg-white border-b-2 border-red-100 p-3 md:p-4 flex justify-between items-center shadow-sm flex-shrink-0 no-print gap-2">
-      <div class="flex items-center gap-3 min-w-0">
-        <h1 id="pageTitle" class="text-base md:text-xl font-black text-red-700 tracking-wide uppercase truncate">
+      class="bg-white border-b-2 border-red-100 px-2.5 py-1.5 md:p-4 flex justify-between items-center shadow-xs md:shadow-sm flex-shrink-0 no-print gap-1.5 md:gap-2">
+      <div class="flex items-center gap-2 md:gap-3 min-w-0">
+        <h1 id="pageTitle" class="text-xs sm:text-base md:text-xl font-black text-red-700 tracking-wide uppercase truncate">
           TÌM KIẾM SƠN & TỒN KHO
         </h1>
         <div id="lastUpdatedBadge"
@@ -565,21 +574,21 @@
       </div>
 
       <!-- Header Action Buttons -->
-      <div class="flex items-center gap-1.5 md:gap-2 shrink-0">
+      <div class="flex items-center gap-1 md:gap-2 shrink-0">
         <button onclick="openQrScannerModal()" title="Mở camera quét mã QR vị trí kệ hoặc mã vật tư"
-          class="px-3 py-2 bg-gradient-to-r from-red-600 to-amber-600 hover:brightness-110 text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition active:scale-95 cursor-pointer">
+          class="px-2 py-1.5 md:px-3 md:py-2 bg-gradient-to-r from-red-600 to-amber-600 hover:brightness-110 text-white rounded-lg md:rounded-xl text-xs font-bold shadow-xs flex items-center gap-1 md:gap-1.5 transition active:scale-95 cursor-pointer">
           <i class="fa-solid fa-camera text-yellow-300"></i>
           <span class="hidden sm:inline">QUÉT QR</span>
         </button>
 
         <button onclick="openQrGeneratorModal()" title="In tem mã QR vị trí kệ hoặc mã vật tư"
-          class="px-3 py-2 bg-yellow-400 hover:bg-yellow-500 text-red-950 font-black rounded-xl text-xs shadow-sm flex items-center gap-1.5 transition active:scale-95 cursor-pointer">
+          class="px-2 py-1.5 md:px-3 md:py-2 bg-yellow-400 hover:bg-yellow-500 text-red-950 font-black rounded-lg md:rounded-xl text-xs shadow-xs flex items-center gap-1 md:gap-1.5 transition active:scale-95 cursor-pointer">
           <i class="fa-solid fa-print"></i>
           <span class="hidden md:inline">IN TEM QR</span>
         </button>
 
         <button onclick="fetchAllData(true)" title="Làm mới dữ liệu từ Google Sheets"
-          class="bg-red-700 hover:bg-red-800 text-yellow-300 font-black px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm border border-red-800 transition active:scale-95 cursor-pointer">
+          class="bg-red-700 hover:bg-red-800 text-yellow-300 font-black px-2.5 py-1.5 md:px-3.5 md:py-2 rounded-lg md:rounded-xl text-xs flex items-center gap-1 md:gap-1.5 shadow-xs border border-red-800 transition active:scale-95 cursor-pointer">
           <i id="reloadIcon" class="fa-solid fa-arrows-rotate"></i>
           <span class="hidden sm:inline">TẢI LẠI</span>
         </button>
@@ -587,18 +596,18 @@
     </header>
 
     <!-- Content Tabs Wrapper -->
-    <div id="main-content-wrapper" class="flex-1 p-3 md:p-5 overflow-y-auto overflow-x-hidden flex flex-col bg-[#fcfcfc] custom-scrollbar">
+    <div id="main-content-wrapper" class="flex-1 p-2 sm:p-3 md:p-5 overflow-y-auto overflow-x-hidden flex flex-col bg-[#fcfcfc] custom-scrollbar">
 
       <!-- ========================================================================= -->
       <!-- TAB 1: TÌM KIẾM & TỒN KHO -->
       <!-- ========================================================================= -->
-      <div id="tab-inventory" class="tab-content active-tab space-y-3">
+      <div id="tab-inventory" class="tab-content active-tab space-y-2.5 md:space-y-3">
 
         <!-- Search bar -->
         <div class="relative flex-shrink-0">
-          <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-red-600 text-lg"></i>
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 md:top-3.5 text-red-600 text-base md:text-lg"></i>
           <input type="text" id="paintInp" oninput="debouncedSearchPaint()"
-            class="w-full pl-12 pr-4 py-3 bg-white border-2 border-red-200 rounded-xl focus:border-red-600 focus:ring-2 focus:ring-red-100 outline-none text-base font-bold text-gray-800 shadow-sm"
+            class="w-full pl-10 md:pl-12 pr-4 py-2.5 md:py-3 bg-white border-2 border-red-200 rounded-xl focus:border-red-600 focus:ring-2 focus:ring-red-100 outline-none text-xs sm:text-sm md:text-base font-bold text-gray-800 shadow-xs"
             placeholder="Nhập mã vật tư hoặc tên sơn cần tìm kiếm...">
         </div>
 
@@ -657,49 +666,48 @@
       <!-- ========================================================================= -->
       <!-- TAB 2: TỔNG QUAN KHO -->
       <!-- ========================================================================= -->
-      <div id="tab-overview" class="tab-content space-y-3">
+      <div id="tab-overview" class="tab-content space-y-2.5 md:space-y-3">
 
         <!-- Thống kê tuổi tồn kho -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-shrink-0">
+        <div class="grid grid-cols-3 gap-1.5 sm:gap-3 flex-shrink-0">
           <div
-            class="bg-emerald-50 border-2 border-emerald-200 p-3 rounded-xl flex items-center justify-between shadow-sm">
+            class="bg-emerald-50 border-2 border-emerald-200 p-2 sm:p-3 rounded-xl flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left shadow-xs">
             <div>
-              <span class="text-[10px] font-black uppercase text-emerald-700 block">🟢 Mới nhập (&lt; 60 ngày)</span>
-              <span id="stat_age_safe" class="text-xl font-black text-emerald-900">0 Lít</span>
+              <span class="text-[9px] sm:text-[10px] font-black uppercase text-emerald-700 block truncate">🟢 Mới (&lt;60d)</span>
+              <span id="stat_age_safe" class="text-xs sm:text-lg md:text-xl font-black text-emerald-900">0 Lít</span>
             </div>
-            <i class="fa-solid fa-shield-halved text-2xl text-emerald-400"></i>
+            <i class="fa-solid fa-shield-halved text-base sm:text-2xl text-emerald-400 hidden sm:block"></i>
           </div>
-          <div class="bg-amber-50 border-2 border-amber-200 p-3 rounded-xl flex items-center justify-between shadow-sm">
+          <div class="bg-amber-50 border-2 border-amber-200 p-2 sm:p-3 rounded-xl flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left shadow-xs">
             <div>
-              <span class="text-[10px] font-black uppercase text-amber-800 block">🟡 Tồn trung hạn (60 - 180
-                ngày)</span>
-              <span id="stat_age_medium" class="text-xl font-black text-amber-900">0 Lít</span>
+              <span class="text-[9px] sm:text-[10px] font-black uppercase text-amber-800 block truncate">🟡 60-180d</span>
+              <span id="stat_age_medium" class="text-xs sm:text-lg md:text-xl font-black text-amber-900">0 Lít</span>
             </div>
-            <i class="fa-solid fa-hourglass-half text-2xl text-amber-400"></i>
+            <i class="fa-solid fa-hourglass-half text-base sm:text-2xl text-amber-400 hidden sm:block"></i>
           </div>
-          <div class="bg-red-50 border-2 border-red-200 p-3 rounded-xl flex items-center justify-between shadow-sm">
+          <div class="bg-red-50 border-2 border-red-200 p-2 sm:p-3 rounded-xl flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left shadow-xs">
             <div>
-              <span class="text-[10px] font-black uppercase text-red-700 block">🔴 Tồn lâu ngày (&gt; 180 ngày)</span>
-              <span id="stat_age_warning" class="text-xl font-black text-red-900">0 Lít</span>
+              <span class="text-[9px] sm:text-[10px] font-black uppercase text-red-700 block truncate">🔴 &gt;180d</span>
+              <span id="stat_age_warning" class="text-xs sm:text-lg md:text-xl font-black text-red-900">0 Lít</span>
             </div>
-            <i class="fa-solid fa-triangle-exclamation text-2xl text-red-400 animate-pulse"></i>
+            <i class="fa-solid fa-triangle-exclamation text-base sm:text-2xl text-red-400 animate-pulse hidden sm:block"></i>
           </div>
         </div>
 
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 flex-shrink-0">
-          <div class="flex gap-2 w-full md:w-auto">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 flex-shrink-0">
+          <div class="flex gap-1.5 sm:gap-2 w-full sm:w-auto">
             <button onclick="renderOverview('lanh', this)"
-              class="ov-btn px-6 py-2 bg-red-700 text-yellow-300 font-bold rounded-lg shadow transition-colors flex-1 md:flex-none border border-red-800 uppercase cursor-pointer">
+              class="ov-btn px-4 py-1.5 md:px-6 md:py-2 bg-red-700 text-yellow-300 font-bold rounded-lg shadow-xs transition-colors flex-1 sm:flex-none border border-red-800 uppercase text-xs md:text-sm cursor-pointer">
               KHO LẠNH
             </button>
             <button onclick="renderOverview('x6', this)"
-              class="ov-btn px-6 py-2 bg-white border-2 border-red-200 text-red-700 font-bold rounded-lg flex-1 md:flex-none uppercase hover:bg-red-50 cursor-pointer">
+              class="ov-btn px-4 py-1.5 md:px-6 md:py-2 bg-white border-2 border-red-200 text-red-700 font-bold rounded-lg flex-1 sm:flex-none uppercase hover:bg-red-50 text-xs md:text-sm cursor-pointer">
               KHO X6
             </button>
           </div>
           <button onclick="exportToExcel('tableOverview', 'Tong-Quan-Kho')"
-            class="bg-red-600 text-yellow-300 px-6 py-2 rounded-lg font-black uppercase shadow hover:bg-red-700 transition-colors w-full md:w-auto border border-red-800 flex items-center justify-center gap-2 cursor-pointer">
-            <i class="fa-solid fa-file-excel text-lg"></i>
+            class="bg-red-600 text-yellow-300 px-4 py-1.5 md:px-6 md:py-2 rounded-lg font-black uppercase shadow-xs hover:bg-red-700 transition-colors w-full sm:w-auto border border-red-800 flex items-center justify-center gap-2 text-xs md:text-sm cursor-pointer">
+            <i class="fa-solid fa-file-excel text-base"></i>
             <span>Xuất Excel</span>
           </button>
         </div>
@@ -1015,54 +1023,72 @@
       <!-- ========================================================================= -->
       <!-- TAB 4: SƠ ĐỒ VỊ TRÍ KHO (LAYOUT KHO X6 & KHO LẠNH) -->
       <!-- ========================================================================= -->
-      <div id="tab-layout" class="tab-content space-y-3">
+      <div id="tab-layout" class="tab-content space-y-2 md:space-y-3">
 
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 flex-shrink-0">
-          <div class="flex gap-2 w-full md:w-auto">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 md:gap-3 flex-shrink-0">
+          <div class="flex gap-1.5 sm:gap-2 w-full sm:w-auto">
             <button onclick="drawLayout('x6', this)"
-              class="lay-btn px-5 py-2 bg-white border-2 border-red-200 text-red-700 font-bold rounded-xl uppercase hover:bg-red-50 text-xs md:text-sm flex-1 md:flex-none cursor-pointer">
+              class="lay-btn px-3 py-1.5 md:px-5 md:py-2 bg-white border-2 border-red-200 text-red-700 font-bold rounded-xl uppercase hover:bg-red-50 text-xs md:text-sm flex-1 sm:flex-none cursor-pointer">
               <i class="fa-solid fa-warehouse mr-1"></i> LAYOUT KHO X6
             </button>
             <button onclick="drawLayout('lanh', this)"
-              class="lay-btn px-5 py-2 bg-red-700 text-yellow-300 font-bold rounded-xl shadow-sm uppercase border border-red-800 text-xs md:text-sm flex-1 md:flex-none cursor-pointer">
+              class="lay-btn px-3 py-1.5 md:px-5 md:py-2 bg-red-700 text-yellow-300 font-bold rounded-xl shadow-xs uppercase border border-red-800 text-xs md:text-sm flex-1 sm:flex-none cursor-pointer">
               <i class="fa-solid fa-snowflake mr-1"></i> LAYOUT KHO LẠNH
             </button>
           </div>
 
           <div
-            class="text-xs font-bold text-red-800 bg-yellow-50 px-4 py-2 rounded-xl shadow-sm border border-yellow-200 w-full md:w-auto text-center flex items-center justify-center gap-2">
-            <i class="fa-solid fa-hand-pointer text-red-600 animate-pulse"></i>
-            <span>Chạm vào ô để xem danh mục sơn • Vuốt ngang để xem toàn bộ sơ đồ</span>
+            class="text-[10px] sm:text-xs font-bold text-red-800 bg-yellow-50 px-2.5 py-1 rounded-xl shadow-2xs border border-yellow-200 w-full sm:w-auto text-center flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-hand-pointer text-red-600 animate-pulse text-[10px]"></i>
+            <span>Chạm ô xem vị trí • Vuốt ngang để xem sơ đồ</span>
           </div>
         </div>
 
         <!-- Sơ đồ trực quan -->
         <div id="drawArea"
-          class="bg-white p-2 sm:p-4 border-2 border-red-100 rounded-2xl shadow-sm flex-shrink-0 overflow-x-auto">
+          class="bg-white p-1.5 sm:p-3 md:p-4 border-2 border-red-100 rounded-xl md:rounded-2xl shadow-xs md:shadow-sm flex-shrink-0 overflow-x-auto">
           <!-- Injected via JavaScript -->
         </div>
 
         <!-- Danh sách tồn kho theo Layout đang chọn -->
-        <div
-          class="bg-white border-2 border-red-100 rounded-2xl shadow-sm table-container overflow-x-auto relative">
-          <div class="flex justify-between items-center p-3 bg-red-50 border-b border-red-200 sticky top-0 z-20">
-            <h3 class="font-black text-red-800 uppercase text-xs md:text-sm tracking-wide" id="layoutKhoTitle">
-              DANH SÁCH TỒN KHO THEO VỊ TRÍ
+        <div class="bg-white border-2 border-red-100 rounded-xl md:rounded-2xl shadow-xs md:shadow-sm overflow-hidden flex-shrink-0">
+          <div class="flex flex-wrap justify-between items-center px-3 py-2 md:p-3 bg-red-50 border-b border-red-200 gap-2">
+            <h3 class="font-black text-red-800 uppercase text-xs md:text-sm tracking-wide flex items-center gap-1.5" id="layoutKhoTitle">
+              <i class="fa-solid fa-boxes-stacked text-red-600"></i> DANH SÁCH TỒN KHO - KHO LẠNH
             </h3>
+            <div class="flex items-center gap-2">
+              <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i>
+                <input id="layoutSearchInp" oninput="renderLayoutInventory()" type="text" placeholder="Tìm mã VT, tên sơn, vị trí..."
+                  class="pl-7 pr-2.5 py-1 bg-white border border-red-200 rounded-lg text-xs outline-none focus:border-red-600 font-medium w-48 sm:w-60 shadow-2xs">
+              </div>
+            </div>
           </div>
-          <table class="w-full text-xs" id="tableLayout">
-            <thead class="bg-red-700 text-yellow-300 sticky top-[44px] z-10 shadow select-none">
-              <tr>
-                <th class="py-2.5 w-28">Mã VT</th>
-                <th class="py-2.5 text-left">Tên Sơn</th>
-                <th class="py-2.5 w-24">Vị Trí</th>
-                <th class="py-2.5 w-28 bg-red-800 text-white font-black">Tồn Kho</th>
-                <th class="py-2.5 w-28">Tuổi Tồn</th>
-                <th class="py-2.5 w-24">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody id="tbodyLayoutInventory"></tbody>
-          </table>
+          <div class="table-container overflow-x-auto relative">
+            <table class="w-full text-xs min-w-[540px]" id="tableLayout">
+              <thead class="bg-red-700 text-yellow-300 sticky top-0 z-10 shadow select-none cursor-pointer">
+                <tr>
+                  <th class="py-2.5 px-2 hover:bg-red-800 transition-colors text-center" onclick="sortData('ma', 'layout')">
+                    Mã VT <i class="fa-solid fa-sort ml-1 opacity-50 sort-icon" data-sort-type="layout" data-sort-key="ma"></i>
+                  </th>
+                  <th class="py-2.5 px-2 text-left hover:bg-red-800 transition-colors" onclick="sortData('ten', 'layout')">
+                    Tên Sơn <i class="fa-solid fa-sort ml-1 opacity-50 sort-icon" data-sort-type="layout" data-sort-key="ten"></i>
+                  </th>
+                  <th class="py-2.5 px-2 hover:bg-red-800 transition-colors text-center" onclick="sortData('vt', 'layout')">
+                    Vị Trí <i class="fa-solid fa-sort ml-1 opacity-50 sort-icon" data-sort-type="layout" data-sort-key="vt"></i>
+                  </th>
+                  <th class="py-2.5 px-2 bg-red-800 text-white font-black hover:bg-red-900 transition-colors text-center" onclick="sortData('ton', 'layout')">
+                    Tồn Kho <i class="fa-solid fa-sort ml-1 opacity-50 sort-icon" data-sort-type="layout" data-sort-key="ton"></i>
+                  </th>
+                  <th class="py-2.5 px-2 hover:bg-red-800 transition-colors text-center" onclick="sortData('ageDays', 'layout')">
+                    Tuổi Tồn <i class="fa-solid fa-sort ml-1 opacity-50 sort-icon" data-sort-type="layout" data-sort-key="ageDays"></i>
+                  </th>
+                  <th class="py-2.5 px-2 text-center w-24">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyLayoutInventory"></tbody>
+            </table>
+          </div>
         </div>
 
       </div>
@@ -1154,37 +1180,35 @@
         </div>
 
         <!-- KPI Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-shrink-0">
+        <div class="grid grid-cols-3 gap-1.5 sm:gap-3 flex-shrink-0">
           <div
-            class="bg-gradient-to-br from-red-50 to-white border-2 border-red-100 p-3 rounded-2xl shadow-2xs flex items-center justify-between">
+            class="bg-gradient-to-br from-red-50 to-white border-2 border-red-100 p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-2xs flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left">
             <div>
-              <div class="text-[10px] font-black text-red-800 uppercase tracking-wider">MÃ VẬT TƯ KIỂM KÊ</div>
-              <div id="kk_stat_total_items" class="text-xl md:text-2xl font-black text-red-700 font-mono mt-0.5">0</div>
+              <div class="text-[9px] sm:text-[10px] font-black text-red-800 uppercase tracking-wider truncate">MÃ VẬT TƯ</div>
+              <div id="kk_stat_total_items" class="text-xs sm:text-lg md:text-2xl font-black text-red-700 font-mono mt-0.5">0</div>
             </div>
-            <div class="w-10 h-10 rounded-xl bg-red-100 text-red-700 flex items-center justify-center text-base"><i
+            <div class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-red-100 text-red-700 flex items-center justify-center text-xs md:text-base hidden sm:flex"><i
                 class="fa-solid fa-boxes-stacked"></i></div>
           </div>
 
           <div
-            class="bg-gradient-to-br from-amber-50 to-white border-2 border-amber-100 p-3 rounded-2xl shadow-2xs flex items-center justify-between">
+            class="bg-gradient-to-br from-amber-50 to-white border-2 border-amber-100 p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-2xs flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left">
             <div>
-              <div class="text-[10px] font-black text-amber-800 uppercase tracking-wider">TỔNG TỒN HỆ THỐNG</div>
-              <div id="kk_stat_converted_qty" class="text-xl md:text-2xl font-black text-amber-700 font-mono mt-0.5">0
-                Lít</div>
+              <div class="text-[9px] sm:text-[10px] font-black text-amber-800 uppercase tracking-wider truncate">TỔNG TỒN</div>
+              <div id="kk_stat_converted_qty" class="text-xs sm:text-lg md:text-2xl font-black text-amber-700 font-mono mt-0.5">0 L</div>
             </div>
-            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-base"><i
+            <div class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-xs md:text-base hidden sm:flex"><i
                 class="fa-solid fa-scale-balanced"></i></div>
           </div>
 
           <div
-            class="bg-gradient-to-br from-emerald-50 to-white border-2 border-emerald-100 p-3 rounded-2xl shadow-2xs flex items-center justify-between">
+            class="bg-gradient-to-br from-emerald-50 to-white border-2 border-emerald-100 p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-2xs flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left">
             <div>
-              <div class="text-[10px] font-black text-emerald-800 uppercase tracking-wider">VỊ TRÍ CÓ TỒN KHO</div>
-              <div id="kk_stat_locations" class="text-xl md:text-2xl font-black text-emerald-700 font-mono mt-0.5">0 Vị
-                trí</div>
+              <div class="text-[9px] sm:text-[10px] font-black text-emerald-800 uppercase tracking-wider truncate">VỊ TRÍ TỒN</div>
+              <div id="kk_stat_locations" class="text-xs sm:text-lg md:text-2xl font-black text-emerald-700 font-mono mt-0.5">0 VT</div>
             </div>
             <div
-              class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-base"><i
+              class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs md:text-base hidden sm:flex"><i
                 class="fa-solid fa-map-pin"></i></div>
           </div>
         </div>
@@ -2648,7 +2672,7 @@
       const tbody = document.getElementById('inventoryBody');
       if (!tbody) return;
 
-      const activeItems = data.filter(i => i.ton !== 0);
+      const activeItems = (data || []).filter(i => i.ton !== 0);
       if (activeItems.length === 0) {
         tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-gray-400 italic font-bold">Không tìm thấy vật tư nào</td></tr>';
         return;
@@ -2657,19 +2681,28 @@
       tbody.innerHTML = activeItems.map(i => {
         let ageBadge = '';
         if (i.ton > 0) {
-          let badgeCls = (i.ageStatus === 'warning' ? 'bg-red-100 text-red-800 border border-red-300' : (i.ageStatus === 'medium' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300'));
+          const badgeCls = (i.ageStatus === 'warning' ? 'bg-red-100 text-red-800 border border-red-300' : (i.ageStatus === 'medium' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300'));
           ageBadge = '<span class="px-2 py-0.5 rounded text-xs font-bold inline-flex items-center gap-1 ' + badgeCls + '">' +
             '<i class="fa-solid fa-clock-rotate-left text-[10px]"></i> ⏳ ' + (i.ageDays || 0) + 'd</span>';
         }
+        const isLanh = (i.kho || '').toLowerCase().includes('lạnh') || (i.kho || '').toLowerCase().includes('lanh');
         return '<tr class="hover:bg-red-50 border-b border-gray-200 transition-colors">' +
-          '<td class="font-bold text-gray-900 font-mono">' + escapeHTML(i.ma) + '</td>' +
+          '<td class="font-bold text-gray-900 font-mono text-center">' +
+            '<button type="button" onclick="openMaterialDetailModal(\'' + escapeHTML(i.ma) + '\')" class="text-red-700 hover:text-red-950 hover:underline flex items-center justify-center gap-1 font-mono font-bold cursor-pointer mx-auto" title="Xem chi tiết & lịch sử vật tư">' +
+              escapeHTML(i.ma) + ' <i class="fa-solid fa-arrow-up-right-from-square text-[9px] opacity-70"></i>' +
+            '</button>' +
+          '</td>' +
           '<td class="text-left font-medium text-gray-700">' + escapeHTML(i.ten) + '</td>' +
-          '<td class="text-green-600 font-bold">' + formatNum(i.nhap) + '</td>' +
-          '<td class="text-red-600 font-bold">' + formatNum(i.xuat) + '</td>' +
-          '<td class="font-black text-lg ' + (i.ton < 0 ? 'text-red-600' : 'text-red-700') + '">' + formatNum(i.ton) + '</td>' +
-          '<td>' + escapeHTML(i.kho) + '</td>' +
-          '<td><span class="px-3 py-1.5 bg-yellow-100 text-red-800 border border-yellow-300 font-bold rounded shadow-xs uppercase text-xs tracking-wide">' + escapeHTML(i.vt) + '</span></td>' +
-          '<td>' + ageBadge + '</td>' +
+          '<td class="text-green-600 font-bold font-mono text-center">' + formatNum(i.nhap) + '</td>' +
+          '<td class="text-red-600 font-bold font-mono text-center">' + formatNum(i.xuat) + '</td>' +
+          '<td class="font-black text-sm md:text-base font-mono text-center ' + (i.ton < 0 ? 'text-red-600' : 'text-red-700') + '">' + formatNum(i.ton) + ' ' + escapeHTML(i.dvt || 'Lít') + '</td>' +
+          '<td class="text-center">' + escapeHTML(i.kho) + '</td>' +
+          '<td class="text-center">' +
+            '<button type="button" onclick="locateAndHighlightRack(\'' + escapeHTML(i.vt) + '\', \'' + (isLanh ? 'lanh' : 'x6') + '\')" class="px-2.5 py-1 bg-yellow-100 hover:bg-yellow-200 text-red-900 border border-yellow-300 font-bold rounded shadow-2xs uppercase text-xs tracking-wide transition cursor-pointer" title="Định vị trên sơ đồ kho">' +
+              escapeHTML(i.vt) +
+            '</button>' +
+          '</td>' +
+          '<td class="text-center">' + ageBadge + '</td>' +
           '</tr>';
       }).join('');
     }
@@ -2677,7 +2710,7 @@
     function searchPaint() {
       const inp = document.getElementById('paintInp');
       const q = inp ? inp.value.trim().toLowerCase() : '';
-      renderInventory(globalData.inventory.filter(i => (i.ma || '').toLowerCase().includes(q) || (i.ten || '').toLowerCase().includes(q)));
+      renderInventory(globalData.inventory.filter(i => (i.ma || '').toLowerCase().includes(q) || (i.ten || '').toLowerCase().includes(q) || (i.vt || '').toLowerCase().includes(q)));
     }
 
     // =========================================================================
@@ -2685,16 +2718,16 @@
     // =========================================================================
     function renderOverview(type, el) {
       if (el) {
-        document.querySelectorAll('.ov-btn').forEach(b => b.className = 'ov-btn px-6 py-2 bg-white border-2 border-red-200 text-red-700 font-bold rounded-lg uppercase hover:bg-red-50');
-        el.className = 'ov-btn px-6 py-2 bg-red-700 text-yellow-300 font-bold rounded-lg shadow transition-colors flex-1 md:flex-none border border-red-800 uppercase';
+        document.querySelectorAll('.ov-btn').forEach(b => b.className = 'ov-btn px-4 py-1.5 md:px-6 md:py-2 bg-white border-2 border-red-200 text-red-700 font-bold rounded-lg uppercase hover:bg-red-50 text-xs md:text-sm cursor-pointer');
+        el.className = 'ov-btn px-4 py-1.5 md:px-6 md:py-2 bg-red-700 text-yellow-300 font-bold rounded-lg shadow-xs transition-colors flex-1 sm:flex-none border border-red-800 uppercase text-xs md:text-sm cursor-pointer';
       } else {
         const btns = document.querySelectorAll('.ov-btn');
         if (btns.length >= 2) {
-          btns.forEach(b => b.className = 'ov-btn px-6 py-2 bg-white border-2 border-red-200 text-red-700 font-bold rounded-lg uppercase hover:bg-red-50');
+          btns.forEach(b => b.className = 'ov-btn px-4 py-1.5 md:px-6 md:py-2 bg-white border-2 border-red-200 text-red-700 font-bold rounded-lg uppercase hover:bg-red-50 text-xs md:text-sm cursor-pointer');
           if (type === 'x6') {
-            btns[1].className = 'ov-btn px-6 py-2 bg-red-700 text-yellow-300 font-bold rounded-lg shadow transition-colors flex-1 md:flex-none border border-red-800 uppercase';
+            btns[1].className = 'ov-btn px-4 py-1.5 md:px-6 md:py-2 bg-red-700 text-yellow-300 font-bold rounded-lg shadow-xs transition-colors flex-1 sm:flex-none border border-red-800 uppercase text-xs md:text-sm cursor-pointer';
           } else {
-            btns[0].className = 'ov-btn px-6 py-2 bg-red-700 text-yellow-300 font-bold rounded-lg shadow transition-colors flex-1 md:flex-none border border-red-800 uppercase';
+            btns[0].className = 'ov-btn px-4 py-1.5 md:px-6 md:py-2 bg-red-700 text-yellow-300 font-bold rounded-lg shadow-xs transition-colors flex-1 sm:flex-none border border-red-800 uppercase text-xs md:text-sm cursor-pointer';
           }
         }
       }
@@ -2722,19 +2755,27 @@
       tbody.innerHTML = filtered.map(i => {
         let ageBadge = '';
         if (i.ton > 0) {
-          let badgeCls = (i.ageStatus === 'warning' ? 'bg-red-100 text-red-800 border border-red-300' : (i.ageStatus === 'medium' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300'));
+          const badgeCls = (i.ageStatus === 'warning' ? 'bg-red-100 text-red-800 border border-red-300' : (i.ageStatus === 'medium' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300'));
           ageBadge = '<span class="px-2 py-0.5 rounded text-xs font-bold inline-flex items-center gap-1 ' + badgeCls + '">' +
             '<i class="fa-solid fa-clock-rotate-left text-[10px]"></i> ⏳ ' + (i.ageDays || 0) + 'd</span>';
         }
         return '<tr class="hover:bg-red-50 border-b border-gray-200 transition-colors">' +
-          '<td class="font-bold text-gray-900 font-mono">' + escapeHTML(i.ma) + '</td>' +
+          '<td class="font-bold text-gray-900 font-mono text-center">' +
+            '<button type="button" onclick="openMaterialDetailModal(\'' + escapeHTML(i.ma) + '\')" class="text-red-700 hover:text-red-950 hover:underline flex items-center justify-center gap-1 font-mono font-bold cursor-pointer mx-auto" title="Xem chi tiết & lịch sử vật tư">' +
+              escapeHTML(i.ma) + ' <i class="fa-solid fa-arrow-up-right-from-square text-[9px] opacity-70"></i>' +
+            '</button>' +
+          '</td>' +
           '<td class="text-left font-medium text-gray-700">' + escapeHTML(i.ten) + '</td>' +
-          '<td class="text-green-600 font-bold">' + formatNum(i.nhap) + '</td>' +
-          '<td class="text-red-600 font-bold">' + formatNum(i.xuat) + '</td>' +
-          '<td class="font-black text-lg ' + (i.ton < 0 ? 'text-red-600' : 'text-red-700') + '">' + formatNum(i.ton) + '</td>' +
-          '<td>' + escapeHTML(i.kho) + '</td>' +
-          '<td><span class="px-3 py-1.5 bg-yellow-100 text-red-800 border border-yellow-300 font-bold rounded shadow-xs uppercase text-xs tracking-wide">' + escapeHTML(i.vt) + '</span></td>' +
-          '<td>' + ageBadge + '</td>' +
+          '<td class="text-green-600 font-bold font-mono text-center">' + formatNum(i.nhap) + '</td>' +
+          '<td class="text-red-600 font-bold font-mono text-center">' + formatNum(i.xuat) + '</td>' +
+          '<td class="font-black text-sm md:text-base font-mono text-center ' + (i.ton < 0 ? 'text-red-600' : 'text-red-700') + '">' + formatNum(i.ton) + ' ' + escapeHTML(i.dvt || 'Lít') + '</td>' +
+          '<td class="text-center">' + escapeHTML(i.kho) + '</td>' +
+          '<td class="text-center">' +
+            '<button type="button" onclick="locateAndHighlightRack(\'' + escapeHTML(i.vt) + '\', \'' + (isLanh ? 'lanh' : 'x6') + '\')" class="px-2.5 py-1 bg-yellow-100 hover:bg-yellow-200 text-red-900 border border-yellow-300 font-bold rounded shadow-2xs uppercase text-xs tracking-wide transition cursor-pointer" title="Định vị trên sơ đồ kho">' +
+              escapeHTML(i.vt) +
+            '</button>' +
+          '</td>' +
+          '<td class="text-center">' + ageBadge + '</td>' +
           '</tr>';
       }).join('');
     }
@@ -3512,9 +3553,10 @@
         return 0;
       };
 
-      if (type === 'inventory') {
+      if (type === 'inventory' || type === 'layout') {
         globalData.inventory.sort(sortFunc);
-        renderInventory(globalData.inventory);
+        if (type === 'inventory') renderInventory(globalData.inventory);
+        if (type === 'layout') renderLayoutInventory();
       } else if (type === 'report') {
         currentFilteredLogs.sort(sortFunc);
         renderReportChiTiet();
@@ -3534,15 +3576,15 @@
       currentLayoutKho = type || currentLayoutKho || 'lanh';
       const btns = document.querySelectorAll('.lay-btn');
       if (btns.length >= 2) {
-        btns.forEach(b => b.className = 'lay-btn px-5 py-2 bg-white border-2 border-red-200 text-red-700 font-bold rounded-xl uppercase hover:bg-red-50 text-xs md:text-sm flex-1 md:flex-none cursor-pointer');
+        btns.forEach(b => b.className = 'lay-btn px-3 py-1.5 md:px-5 md:py-2 bg-white border-2 border-red-200 text-red-700 font-bold rounded-xl uppercase hover:bg-red-50 text-xs md:text-sm flex-1 sm:flex-none cursor-pointer');
         if (currentLayoutKho === 'x6') {
-          btns[0].className = 'lay-btn px-5 py-2 bg-red-700 text-yellow-300 font-bold rounded-xl shadow-sm uppercase border border-red-800 text-xs md:text-sm flex-1 md:flex-none cursor-pointer';
+          btns[0].className = 'lay-btn px-3 py-1.5 md:px-5 md:py-2 bg-red-700 text-yellow-300 font-bold rounded-xl shadow-xs uppercase border border-red-800 text-xs md:text-sm flex-1 sm:flex-none cursor-pointer';
         } else {
-          btns[1].className = 'lay-btn px-5 py-2 bg-red-700 text-yellow-300 font-bold rounded-xl shadow-sm uppercase border border-red-800 text-xs md:text-sm flex-1 md:flex-none cursor-pointer';
+          btns[1].className = 'lay-btn px-3 py-1.5 md:px-5 md:py-2 bg-red-700 text-yellow-300 font-bold rounded-xl shadow-xs uppercase border border-red-800 text-xs md:text-sm flex-1 sm:flex-none cursor-pointer';
         }
       } else if (el) {
-        document.querySelectorAll('.lay-btn').forEach(b => b.className = 'lay-btn px-5 py-2 bg-white border-2 border-red-200 text-red-700 font-bold rounded-xl uppercase hover:bg-red-50 text-xs md:text-sm flex-1 md:flex-none cursor-pointer');
-        el.className = 'lay-btn px-5 py-2 bg-red-700 text-yellow-300 font-bold rounded-xl shadow-sm uppercase border border-red-800 text-xs md:text-sm flex-1 md:flex-none cursor-pointer';
+        document.querySelectorAll('.lay-btn').forEach(b => b.className = 'lay-btn px-3 py-1.5 md:px-5 md:py-2 bg-white border-2 border-red-200 text-red-700 font-bold rounded-xl uppercase hover:bg-red-50 text-xs md:text-sm flex-1 sm:flex-none cursor-pointer');
+        el.className = 'lay-btn px-3 py-1.5 md:px-5 md:py-2 bg-red-700 text-yellow-300 font-bold rounded-xl shadow-xs uppercase border border-red-800 text-xs md:text-sm flex-1 sm:flex-none cursor-pointer';
       }
 
       const area = document.getElementById('drawArea');
@@ -3550,45 +3592,45 @@
 
       if (currentLayoutKho === 'x6') {
         area.innerHTML = `
-          <div class="map-scroll-container overflow-x-auto p-1 sm:p-2 w-full flex justify-start custom-scrollbar" style="touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;">
-            <div class="grid min-w-[760px] md:min-w-[820px] max-w-[1100px] w-full gap-2 sm:gap-2.5 md:gap-3.5 relative select-none mx-auto" 
+          <div class="map-scroll-container overflow-x-auto p-0.5 sm:p-2 w-full flex justify-start custom-scrollbar" style="touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;">
+            <div class="grid min-w-[620px] sm:min-w-[760px] md:min-w-[820px] max-w-[1100px] w-full gap-1.5 sm:gap-2.5 md:gap-3.5 relative select-none mx-auto" 
                  style="grid-template-columns: repeat(10, 1fr);">
-              ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => `<div class="box-vt h-14 sm:h-16 md:h-20 text-xs sm:text-sm md:text-lg shadow-sm" data-vt="A${i}">A${i}</div>`).join('')}
-              <div class="bg-[#8A1414] text-[#FACC15] col-span-10 h-12 sm:h-14 md:h-20 my-1 md:my-2 flex items-center justify-center font-black tracking-widest text-xs sm:text-sm md:text-xl rounded-xl shadow-md border-2 border-yellow-500">
-                <i class="fa-solid fa-road mr-2 md:mr-3"></i> ĐƯỜNG ĐI CHÍNH KHO X6
+              ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => `<div class="box-vt h-10 sm:h-14 md:h-20 text-xs sm:text-sm md:text-lg shadow-2xs" data-vt="A${i}">A${i}</div>`).join('')}
+              <div class="bg-[#8A1414] text-[#FACC15] col-span-10 h-9 sm:h-13 md:h-20 my-1 md:my-2 flex items-center justify-center font-black tracking-widest text-[11px] sm:text-sm md:text-xl rounded-lg md:rounded-xl shadow-xs border-2 border-yellow-500">
+                <i class="fa-solid fa-road mr-1.5 md:mr-3"></i> ĐƯỜNG ĐI CHÍNH KHO X6
               </div>
-              ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => `<div class="box-vt h-14 sm:h-16 md:h-20 text-xs sm:text-sm md:text-lg shadow-sm" data-vt="B${i}">B${i}</div>`).join('')}
+              ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => `<div class="box-vt h-10 sm:h-14 md:h-20 text-xs sm:text-sm md:text-lg shadow-2xs" data-vt="B${i}">B${i}</div>`).join('')}
             </div>
           </div>
         `;
       } else {
         area.innerHTML = `
-          <div class="map-scroll-container overflow-x-auto p-1 sm:p-2 w-full flex justify-start custom-scrollbar" style="touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;">
-            <div class="grid min-w-[680px] md:min-w-[760px] max-w-[940px] w-full h-[240px] sm:h-[260px] md:h-[280px] gap-1.5 sm:gap-2 md:gap-2.5 relative select-none mx-auto" 
+          <div class="map-scroll-container overflow-x-auto p-0.5 sm:p-2 w-full flex justify-start custom-scrollbar" style="touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;">
+            <div class="grid min-w-[560px] sm:min-w-[680px] md:min-w-[760px] max-w-[940px] w-full h-[160px] sm:h-[215px] md:h-[280px] gap-1 sm:gap-2 md:gap-2.5 relative select-none mx-auto" 
                  style="grid-template-columns: 19% 3.5% repeat(5, 1fr); grid-template-rows: 1fr 1.1fr 1.1fr 1fr;">
               
-              <div class="box-vt col-start-1 col-end-2 row-start-1 row-end-2" data-vt="A3">A3</div>
-              <div class="box-vt col-start-1 col-end-2 row-start-2 row-end-3" data-vt="A2">A2</div>
-              <div class="box-vt col-start-1 col-end-2 row-start-3 row-end-4" data-vt="A1">A1</div>
+              <div class="box-vt col-start-1 col-end-2 row-start-1 row-end-2 text-xs sm:text-sm md:text-base" data-vt="A3">A3</div>
+              <div class="box-vt col-start-1 col-end-2 row-start-2 row-end-3 text-xs sm:text-sm md:text-base" data-vt="A2">A2</div>
+              <div class="box-vt col-start-1 col-end-2 row-start-3 row-end-4 text-xs sm:text-sm md:text-base" data-vt="A1">A1</div>
 
               <!-- Khối đường liền mạch không khe hở -->
-              <div class="bg-[#8A1414] col-start-1 col-end-4 row-start-4 row-end-5 rounded-bl-lg -mt-2.5 md:-mt-3 z-0"></div>
-              <div class="bg-[#8A1414] col-start-2 col-end-3 row-start-1 row-end-5 rounded-tl-lg -mr-2.5 md:-mr-3 z-0"></div>
+              <div class="bg-[#8A1414] col-start-1 col-end-4 row-start-4 row-end-5 rounded-bl-lg -mt-2 sm:-mt-2.5 md:-mt-3 z-0"></div>
+              <div class="bg-[#8A1414] col-start-2 col-end-3 row-start-1 row-end-5 rounded-tl-lg -mr-2 sm:-mr-2.5 md:-mr-3 z-0"></div>
 
-              <div class="bg-[#8A1414] col-start-2 col-end-8 row-start-2 row-end-4 flex items-center justify-center text-[#FACC15] font-black tracking-widest text-xs sm:text-sm md:text-lg rounded-r-lg shadow-inner z-0 -mb-2.5 md:-mb-3">
+              <div class="bg-[#8A1414] col-start-2 col-end-8 row-start-2 row-end-4 flex items-center justify-center text-[#FACC15] font-black tracking-widest text-[10px] sm:text-xs md:text-lg rounded-r-lg shadow-inner z-0 -mb-2 sm:-mb-2.5 md:-mb-3">
                 ĐƯỜNG ĐI CHÍNH KHO LẠNH
               </div>
 
-              <div class="box-vt col-start-3 col-end-4 row-start-1 row-end-2" data-vt="B1">B1</div>
-              <div class="box-vt col-start-4 col-end-5 row-start-1 row-end-2" data-vt="B2">B2</div>
-              <div class="box-vt col-start-5 col-end-6 row-start-1 row-end-2" data-vt="B3">B3</div>
-              <div class="box-vt col-start-6 col-end-7 row-start-1 row-end-2" data-vt="B4">B4</div>
-              <div class="box-vt col-start-7 col-end-8 row-start-1 row-end-2" data-vt="B5">B5</div>
+              <div class="box-vt col-start-3 col-end-4 row-start-1 row-end-2 text-xs sm:text-sm md:text-base" data-vt="B1">B1</div>
+              <div class="box-vt col-start-4 col-end-5 row-start-1 row-end-2 text-xs sm:text-sm md:text-base" data-vt="B2">B2</div>
+              <div class="box-vt col-start-5 col-end-6 row-start-1 row-end-2 text-xs sm:text-sm md:text-base" data-vt="B3">B3</div>
+              <div class="box-vt col-start-6 col-end-7 row-start-1 row-end-2 text-xs sm:text-sm md:text-base" data-vt="B4">B4</div>
+              <div class="box-vt col-start-7 col-end-8 row-start-1 row-end-2 text-xs sm:text-sm md:text-base" data-vt="B5">B5</div>
 
-              <div class="box-vt col-start-4 col-end-5 row-start-4 row-end-5" data-vt="C1">C1</div>
-              <div class="box-vt col-start-5 col-end-6 row-start-4 row-end-5" data-vt="C2">C2</div>
-              <div class="box-vt col-start-6 col-end-7 row-start-4 row-end-5" data-vt="C3">C3</div>
-              <div class="box-vt col-start-7 col-end-8 row-start-4 row-end-5" data-vt="C4">C4</div>
+              <div class="box-vt col-start-4 col-end-5 row-start-4 row-end-5 text-xs sm:text-sm md:text-base" data-vt="C1">C1</div>
+              <div class="box-vt col-start-5 col-end-6 row-start-4 row-end-5 text-xs sm:text-sm md:text-base" data-vt="C2">C2</div>
+              <div class="box-vt col-start-6 col-end-7 row-start-4 row-end-5 text-xs sm:text-sm md:text-base" data-vt="C3">C3</div>
+              <div class="box-vt col-start-7 col-end-8 row-start-4 row-end-5 text-xs sm:text-sm md:text-base" data-vt="C4">C4</div>
             </div>
           </div>
         `;
@@ -3599,50 +3641,61 @@
     }
 
     function renderLayoutInventory() {
-      const term = currentLayoutKho === 'lanh' ? 'lạnh' : 'x6';
-      const filtered = (globalData.inventory || []).filter(i => (i.kho || '').toLowerCase().includes(term) && i.ton > 0);
+      const isLanh = currentLayoutKho === 'lanh';
+      const q = (document.getElementById('layoutSearchInp')?.value || '').toLowerCase().trim();
+
+      const filtered = (globalData.inventory || []).filter(i => {
+        if (i.ton <= 0) return false;
+        const k = (i.kho || '').toLowerCase();
+        const matchKho = isLanh ? (k.includes('lạnh') || k.includes('lanh') || !k.includes('x6')) : (k.includes('x6') || !k.includes('lạnh'));
+        if (!matchKho) return false;
+        if (q) {
+          return (i.ma || '').toLowerCase().includes(q) || (i.ten || '').toLowerCase().includes(q) || (i.vt || '').toLowerCase().includes(q);
+        }
+        return true;
+      });
 
       const titleEl = document.getElementById('layoutKhoTitle');
-      if (titleEl) titleEl.innerText = `DANH SÁCH TỒN KHO - ${currentLayoutKho === 'x6' ? 'KHO X6' : 'KHO LẠNH'}`;
+      if (titleEl) {
+        titleEl.innerHTML = '<i class="fa-solid fa-boxes-stacked text-red-600 mr-1.5"></i>DANH SÁCH TỒN KHO - ' + (isLanh ? 'KHO LẠNH' : 'KHO X6') + ' <span class="text-xs font-bold text-slate-500 font-sans">(' + filtered.length + ' vật tư)</span>';
+      }
 
       const tbody = document.getElementById('tbodyLayoutInventory');
       if (!tbody) return;
 
-      makeTableColumnsResizable(document.getElementById('tableLayout'));
-
       if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-gray-400 italic text-center">Không có hàng tồn trong kho này</td></tr>';
-      } else {
-        tbody.innerHTML = filtered.map(i => {
-          let ageBadge = '';
-          if (i.ton > 0) {
-            ageBadge = `<span class="px-2 py-0.5 rounded text-xs font-bold inline-flex items-center gap-1 ${i.ageStatus === 'warning' ? 'bg-red-100 text-red-800 border border-red-300' : (i.ageStatus === 'medium' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300')}">
-              <i class="fa-solid fa-clock-rotate-left text-[10px]"></i> ⏳ ${i.ageDays || 0}d
-            </span>`;
-          }
-          return `
-            <tr class="hover:bg-red-50 border-b transition-colors border-red-100">
-              <td class="font-bold text-gray-900 font-mono">
-                <button type="button" onclick="openMaterialDetailModal('${escapeHTML(i.ma)}')" class="text-red-700 hover:text-red-950 hover:underline flex items-center justify-center gap-1 font-mono font-bold cursor-pointer mx-auto">
-                  ${escapeHTML(i.ma)} <i class="fa-solid fa-arrow-up-right-from-square text-[9px] opacity-70"></i>
-                </button>
-              </td>
-              <td class="text-left font-medium text-gray-700">${escapeHTML(i.ten)}</td>
-              <td><span class="px-3 py-1.5 bg-yellow-100 text-red-800 border border-yellow-300 font-bold rounded shadow-sm text-xs uppercase tracking-wide">${escapeHTML(i.vt)}</span></td>
-              <td class="font-black text-red-700 text-sm font-mono">${formatNum(i.ton)}</td>
-              <td>${ageBadge}</td>
-              <td>
-                <button type="button" onclick="openRackDetailModal('${escapeHTML(i.vt || '')}', '${currentLayoutKho === 'x6' ? 'KHO X6' : 'KHO LẠNH'}')"
-                  class="bg-red-700 hover:bg-red-800 active:scale-95 text-yellow-300 text-xs px-2.5 py-1 rounded-lg font-bold inline-flex items-center gap-1 transition-all shadow-sm cursor-pointer"
-                  title="Xem chi tiết vị trí">
-                  <i class="fa-solid fa-eye text-[10px]"></i>
-                  <span>Chi tiết</span>
-                </button>
-              </td>
-            </tr>
-          `;
-        }).join('');
+        tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-gray-400 italic text-center font-bold">Không có hàng tồn trong kho này</td></tr>';
+        return;
       }
+
+      tbody.innerHTML = filtered.map(i => {
+        let ageBadge = '';
+        if (i.ton > 0) {
+          const badgeCls = (i.ageStatus === 'warning' ? 'bg-red-100 text-red-800 border border-red-300' : (i.ageStatus === 'medium' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300'));
+          ageBadge = '<span class="px-2 py-0.5 rounded text-xs font-bold inline-flex items-center gap-1 ' + badgeCls + '">' +
+            '<i class="fa-solid fa-clock-rotate-left text-[10px]"></i> ⏳ ' + (i.ageDays || 0) + 'd</span>';
+        }
+        return '<tr class="hover:bg-red-50 border-b transition-colors border-red-100">' +
+          '<td class="font-bold text-gray-900 font-mono text-center">' +
+            '<button type="button" onclick="openMaterialDetailModal(\'' + escapeHTML(i.ma) + '\')" class="text-red-700 hover:text-red-950 hover:underline flex items-center justify-center gap-1 font-mono font-bold cursor-pointer mx-auto" title="Xem chi tiết & lịch sử vật tư">' +
+              escapeHTML(i.ma) + ' <i class="fa-solid fa-arrow-up-right-from-square text-[9px] opacity-70"></i>' +
+            '</button>' +
+          '</td>' +
+          '<td class="text-left font-medium text-gray-700">' + escapeHTML(i.ten) + '</td>' +
+          '<td class="text-center">' +
+            '<button type="button" onclick="locateAndHighlightRack(\'' + escapeHTML(i.vt) + '\', \'' + currentLayoutKho + '\')" class="px-2.5 py-1 bg-yellow-100 hover:bg-yellow-200 text-red-900 border border-yellow-300 font-bold rounded shadow-2xs text-xs uppercase tracking-wide transition cursor-pointer" title="Định vị trên sơ đồ kho">' +
+              escapeHTML(i.vt) +
+            '</button>' +
+          '</td>' +
+          '<td class="font-black text-red-700 text-sm font-mono text-center">' + formatNum(i.ton) + ' ' + escapeHTML(i.dvt || 'Lít') + '</td>' +
+          '<td class="text-center">' + ageBadge + '</td>' +
+          '<td class="text-center">' +
+            '<button type="button" onclick="openRackDetailModal(\'' + escapeHTML(i.vt || '') + '\', \'' + (currentLayoutKho === 'x6' ? 'KHO X6' : 'KHO LẠNH') + '\')" class="bg-red-700 hover:bg-red-800 active:scale-95 text-yellow-300 text-xs px-2.5 py-1 rounded-lg font-bold inline-flex items-center gap-1 transition-all shadow-xs cursor-pointer" title="Xem danh mục vị trí kệ này">' +
+              '<i class="fa-solid fa-eye text-[10px]"></i> <span>Vị trí</span>' +
+            '</button>' +
+          '</td>' +
+          '</tr>';
+      }).join('');
     }
 
     function setupLayoutTooltips() {
